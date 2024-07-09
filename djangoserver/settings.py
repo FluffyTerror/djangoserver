@@ -38,8 +38,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'MangaLib.apps.MangalibConfig',
-    'rest_framework_simplejwt',
-    'rest_framework.authtoken',
+
+
+
 ]
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_SAMESITE = None
@@ -150,8 +151,8 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,
     'UPDATE_LAST_LOGIN': False,
