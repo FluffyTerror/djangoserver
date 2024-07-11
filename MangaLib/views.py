@@ -12,8 +12,8 @@ import jwt, datetime
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import User, Manga, Category
-from .serializers import UserSerializer, MangaSerializer
+from .models import User, Manga, Category, Review
+from .serializers import UserSerializer, MangaSerializer, ReviewSerializer
 
 
 class MangaListView(generics.ListAPIView):  # GET все тайтлы
@@ -21,6 +21,17 @@ class MangaListView(generics.ListAPIView):  # GET все тайтлы
     queryset = Manga.objects.all()
     serializer_class = MangaSerializer
 
+
+class UserListView(generics.ListAPIView):  # GET всех User'ов
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+class UserUpdateView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
 class MangaCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -45,7 +56,53 @@ class MangaUpdateView(generics.UpdateAPIView):  # PUT change attr in manga
     serializer_class = MangaSerializer
 
 
+class AddBookmarkView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        manga_id = request.data.get('manga_id')
+        try:
+            manga = Manga.objects.get(id=manga_id)
+        except Manga.DoesNotExist:
+            return Response({"error": "Manga not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        user.bookmarks.add(manga)
+        user.save()
+        return Response({"status": "Manga added to bookmarks"}, status=status.HTTP_200_OK)
+
+class AddFavouriteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        manga_id = request.data.get('manga_id')
+        try:
+            manga = Manga.objects.get(id=manga_id)
+        except Manga.DoesNotExist:
+            return Response({"error": "Manga not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        user.favourite.add(manga)
+        user.save()
+        return Response({"status": "Manga added to favourite"}, status=status.HTTP_200_OK)
+
+
+
+class AddReviewView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ReviewSerializer
+
+    def perform_create(self, serializer):
+        manga_id = self.kwargs['manga_id']
+        manga = Manga.objects.get(id=manga_id)
+        serializer.save(user=self.request.user, manga=manga)
+
+class MangaReviewsView(generics.ListAPIView):
+    serializer_class = ReviewSerializer
+
+    def get_queryset(self):
+        manga_id = self.kwargs['manga_id']
+        return Review.objects.filter(manga__id=manga_id)
 
 
 

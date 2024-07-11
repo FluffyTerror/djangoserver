@@ -19,6 +19,12 @@ urlpatterns = [
     path('manga/', MangaListView.as_view(), name='manga-list'),
     path('manga/<int:pk>/', MangaDetailView.as_view(), name='manga-detail'),
     path('manga/<int:pk>/update/', MangaUpdateView.as_view(), name='manga-update'),
+    path('user/',UserListView.as_view(),name='user-list'),
+    path('user/<int:pk>/',UserUpdateView.as_view(),name='user-update'),
+    path('manga/add_favourite/', AddFavouriteView.as_view(), name='manga-favourite'),
+    path('manga/add_bookmark/', AddBookmarkView.as_view(), name='manga-bookmark'),
+    path('manga/<int:manga_id>/add_review/', AddReviewView.as_view(), name='add-review'),
+    path('manga/<int:manga_id>/reviews/', MangaReviewsView.as_view(), name='manga-reviews'),
 
     #path('register/', UserRegistrationView.as_view(), name='register'),
     #path('login/', UserLoginView.as_view(), name='login'),
