@@ -28,12 +28,12 @@ class UserListView(generics.ListAPIView):  # GET всех User'ов
     serializer_class = UserSerializer
 
 
-class UserUpdateView(generics.UpdateAPIView):
+class UserUpdateView(generics.UpdateAPIView): #PATCH изменить инфу о  юзере
     permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-class MangaCreateView(APIView):
+class MangaCreateView(APIView): # POST создать мангу
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
@@ -56,7 +56,7 @@ class MangaUpdateView(generics.UpdateAPIView):  # PUT change attr in manga
     serializer_class = MangaSerializer
 
 
-class AddBookmarkView(APIView):
+class AddBookmarkView(APIView): # POST добавить в закладки
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
@@ -71,7 +71,7 @@ class AddBookmarkView(APIView):
         user.save()
         return Response({"status": "Manga added to bookmarks"}, status=status.HTTP_200_OK)
 
-class AddFavouriteView(APIView):
+class AddFavouriteView(APIView):# POST добавить в избранное
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
@@ -88,7 +88,7 @@ class AddFavouriteView(APIView):
 
 
 
-class AddReviewView(generics.CreateAPIView):
+class AddReviewView(generics.CreateAPIView): # POST создать отзыв
     permission_classes = [IsAuthenticated]
     serializer_class = ReviewSerializer
 
@@ -97,7 +97,7 @@ class AddReviewView(generics.CreateAPIView):
         manga = Manga.objects.get(id=manga_id)
         serializer.save(user=self.request.user, manga=manga)
 
-class MangaReviewsView(generics.ListAPIView):
+class MangaReviewsView(generics.ListAPIView): # GET список отзывов
     serializer_class = ReviewSerializer
 
     def get_queryset(self):
@@ -108,7 +108,7 @@ class MangaReviewsView(generics.ListAPIView):
 
 
 
-class CustomUserCreate(APIView):
+class CustomUserCreate(APIView): # POST создать юзера
     permission_classes = [AllowAny]
 
     def post(self, request, format='json'):
@@ -126,7 +126,7 @@ class CustomUserCreate(APIView):
 
 
 
-class CustomUserLogin(APIView):
+class CustomUserLogin(APIView):# POST залогинить юзера
     permission_classes = [AllowAny]
 
     def post(self, request, format='json'):
@@ -150,7 +150,7 @@ class CustomUserLogin(APIView):
 
 
 
-class LogoutAPIView(APIView):
+class LogoutAPIView(APIView):# POST разалогинить юзера
     permission_classes = [IsAuthenticated]
 
     def post(self, request):

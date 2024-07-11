@@ -2,8 +2,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from rest_framework import serializers
-from rest_framework_simplejwt.tokens import RefreshToken
+
 
 class Manga(models.Model):
     Title = models.CharField(max_length=128)
