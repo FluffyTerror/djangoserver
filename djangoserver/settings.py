@@ -44,11 +44,22 @@ INSTALLED_APPS = [
 
 
 ]
-CSRF_COOKIE_SECURE = False
-CSRF_COOKIE_SAMESITE = None
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080"  # ПОМЕНЯЙ АДРЕСС ФРОНТА
+    "http://localhost:3000",
 ]
+
+CORS_ALLOW_HEADERS = [
+    'content-type',
+    'authorization',
+    'x-csrftoken',
+    'token',
+    'ngrok-skip-browser-warning'
+]
+
+
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = None
+
 
 MIDDLEWARE = [
 
@@ -60,6 +71,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -155,9 +167,9 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
-    'ROTATE_REFRESH_TOKENS': False,
+    'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': False,
-    'UPDATE_LAST_LOGIN': False,
+    'UPDATE_LAST_LOGIN': True,
 
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,

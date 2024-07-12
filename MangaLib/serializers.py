@@ -17,7 +17,7 @@ class MangaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Manga
-        fields = ("Title", "Author", "Description", "Release", "Is_Finished", "Chapters", "artist", "Category","Image", "rating", "ratingCount","Category_display")
+        fields = ("Title", "Author", "Description", "Release", "Is_Finished", "Chapters", "Artist", "Category","Image", "Rating", "RatingCount","Category_display")
 
     def create(self, validated_data):
         categories = validated_data.pop('get_categories', [])
@@ -32,10 +32,10 @@ class MangaSerializer(serializers.ModelSerializer):
         instance.Release = validated_data.get('Release', instance.Release)
         instance.Is_Finished = validated_data.get('Is_Finished', instance.Is_Finished)
         instance.Chapters = validated_data.get('Chapters', instance.Chapters)
-        instance.artist = validated_data.get('artist', instance.artist)
+        instance.artist = validated_data.get('Artist', instance.artist)
         instance.Image = validated_data.get('Image', instance.Image)
-        instance.ratingCount = validated_data.get('ratingCount', instance.ratingCount)
-        instance.rating = validated_data.get('rating', instance.rating)
+        instance.ratingCount = validated_data.get('RatingCount', instance.ratingCount)
+        instance.rating = validated_data.get('Rating', instance.rating)
         instance.Category = ','.join(categories)
         instance.save()
         return instance

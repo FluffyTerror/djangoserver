@@ -3,7 +3,8 @@ from django.forms import model_to_dict
 from django.shortcuts import render
 from rest_framework import generics, viewsets, mixins, status, permissions
 from rest_framework.decorators import action
-from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -16,22 +17,64 @@ from .models import User, Manga, Category, Review
 from .serializers import UserSerializer, MangaSerializer, ReviewSerializer
 
 
+class MangaIdView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def post(self, request, *args, **kwargs):
+        manga_id = request.data.get('id')
+        if not manga_id:
+            return Response({"error": "No ID provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            manga = Manga.objects.get(id=manga_id)
+        except Manga.DoesNotExist:
+            return Response({"error": "Manga not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = MangaSerializer(manga)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class MangaListView(generics.ListAPIView):  # GET все тайтлы
     permission_classes = [IsAuthenticatedOrReadOnly]
     queryset = Manga.objects.all()
     serializer_class = MangaSerializer
 
 
-class UserListView(generics.ListAPIView):  # GET всех User'ов
+class UserListView(generics.ListAPIView):  # GET всех User'ов (убрать потом)
     permission_classes = [IsAuthenticatedOrReadOnly]
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
 
-class UserUpdateView(generics.UpdateAPIView): #PATCH изменить инфу о  юзере
+class UsernameView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    def post(self, request, *args, **kwargs):
+        username = request.data.get('username')
+        if not username:
+            return Response({"error": "No valid username provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UserUpdateView(generics.UpdateAPIView): # PATCH изменение юзера
     permission_classes = [IsAuthenticated]
-    queryset = User.objects.all()
     serializer_class = UserSerializer
+    lookup_field = 'username'
+    lookup_url_kwarg = 'nickname'
+
+    def get_object(self):
+        nickname = self.kwargs.get(self.lookup_url_kwarg)
+        user = get_object_or_404(User, username=nickname)
+        if self.request.user != user:
+            raise PermissionDenied("You do not have permission to edit this user.")
+        return user
+
 
 class MangaCreateView(APIView): # POST создать мангу
     permission_classes = [IsAuthenticated]
@@ -66,10 +109,10 @@ class AddBookmarkView(APIView): # POST добавить в закладки
             manga = Manga.objects.get(id=manga_id)
         except Manga.DoesNotExist:
             return Response({"error": "Manga not found"}, status=status.HTTP_404_NOT_FOUND)
-
         user.bookmarks.add(manga)
         user.save()
         return Response({"status": "Manga added to bookmarks"}, status=status.HTTP_200_OK)
+
 
 class AddFavouriteView(APIView):# POST добавить в избранное
     permission_classes = [IsAuthenticated]
@@ -87,24 +130,29 @@ class AddFavouriteView(APIView):# POST добавить в избранное
         return Response({"status": "Manga added to favourite"}, status=status.HTTP_200_OK)
 
 
-
-class AddReviewView(generics.CreateAPIView): # POST создать отзыв
+class AddReviewView(generics.CreateAPIView):  # POST создать отзыв
     permission_classes = [IsAuthenticated]
     serializer_class = ReviewSerializer
 
     def perform_create(self, serializer):
         manga_id = self.kwargs['manga_id']
         manga = Manga.objects.get(id=manga_id)
-        serializer.save(user=self.request.user, manga=manga)
+
+        review = serializer.save(user=self.request.user, manga=manga)
+
+        manga.RatingCount += 1
+        new_rating = (manga.Rating * (manga.RatingCount - 1) + review.rating) / manga.RatingCount
+        manga.Rating = round(new_rating, 2)
+        manga.save()
+
 
 class MangaReviewsView(generics.ListAPIView): # GET список отзывов
+    permission_classes = [AllowAny]
     serializer_class = ReviewSerializer
 
     def get_queryset(self):
         manga_id = self.kwargs['manga_id']
         return Review.objects.filter(manga__id=manga_id)
-
-
 
 
 

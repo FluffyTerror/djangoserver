@@ -9,13 +9,13 @@ class Manga(models.Model):
     Author = models.CharField(max_length=64)
     Description = models.TextField(blank=True)
     Release = models.DateField()
-    Is_Finished = models.BooleanField(default=True)
+    Is_Finished = models.BooleanField(default=True) # change to CharField
     Chapters = models.IntegerField()
-    artist = models.CharField(max_length=64)
+    Artist = models.CharField(max_length=64)
     Category = models.CharField()
     Image = models.ImageField(upload_to='media/manga', default='image 8.png')
-    rating = models.FloatField(default=0)
-    ratingCount = models.IntegerField(default=0)
+    Rating = models.FloatField(default=0)
+    RatingCount = models.IntegerField(default=0)
 
 
 
@@ -34,8 +34,8 @@ class User(AbstractUser):
     profile_image = models.ImageField(upload_to='media/', default='User profile picture.png')
     password = models.CharField(max_length=128)
     about = models.CharField(max_length=500, default='Что-то обо мне...')
-    bookmarks = models.ManyToManyField(Manga, related_name='bookmarked_users')
-    favourite = models.ManyToManyField(Manga, related_name='favourite_users')
+    bookmarks = models.ManyToManyField(Manga, related_name='bookmarked_users',default=None)
+    favourite = models.ManyToManyField(Manga, related_name='favourite_users',default=None)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

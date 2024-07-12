@@ -14,9 +14,11 @@ from MangaLib.views import *
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    path('user/', UserListView.as_view(), name='user-list'),
-    path('user/<int:pk>/', UserUpdateView.as_view(), name='user-update'),
+   # path('user/', UserListView.as_view(), name='user-list'),
+    path('user/', UsernameView.as_view(), name='user-by-nickname'),
+    path('user/<str:nickname>/update/', UserUpdateView.as_view(), name='user-update'),
 
+    path('manga/find/', MangaIdView.as_view(), name='manga-get-by-id'),
     path('manga/create/', MangaCreateView.as_view(), name='manga-create'),
     path('manga/', MangaListView.as_view(), name='manga-list'),
     path('manga/<int:pk>/', MangaDetailView.as_view(), name='manga-detail'),
