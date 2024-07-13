@@ -4,26 +4,29 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
+class Category(models.Model):
+    name = models.CharField(max_length=64, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Manga(models.Model):
     Title = models.CharField(max_length=128)
     Author = models.CharField(max_length=64)
     Description = models.TextField(blank=True)
     Release = models.DateField()
-    Is_Finished = models.BooleanField(default=True) # change to CharField
+    Is_Finished = models.CharField(default=None)
     Chapters = models.IntegerField()
     Artist = models.CharField(max_length=64)
-    Category = models.CharField()
     Image = models.ImageField(upload_to='media/manga', default='image 8.png')
     Rating = models.FloatField(default=0)
     RatingCount = models.IntegerField(default=0)
-
-
+    Category = models.ManyToManyField(Category, related_name='manga')
 
     def __str__(self):
         return self.Title
 
-    def get_categories(self):
-        return self.Category.split(',')
 
 
 
@@ -51,11 +54,6 @@ class User(AbstractUser):
 
 
 
-class Category(models.Model):
-    Category = models.CharField(max_length=64)
-
-    def __str__(self):
-        return self.Category
 
 
 

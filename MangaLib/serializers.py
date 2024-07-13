@@ -4,8 +4,16 @@ from rest_framework import serializers
 from rest_framework.response import Response
 
 
-from MangaLib.models import Manga, User, Review
+from MangaLib.models import Manga, User, Review, Category
 
+
+class ReviewSerializer(serializers.ModelSerializer):
+    user = serializers.ReadOnlyField(source='user.username')
+    user_profile_image = serializers.ImageField(source='user.profile_image', read_only=True)
+
+    class Meta:
+        model = Review
+        fields = ['id', 'user', 'user_profile_image', 'text', 'rating', 'created_at']
 
 class MangaSerializer(serializers.ModelSerializer):
     Category = serializers.ListField(
@@ -14,10 +22,11 @@ class MangaSerializer(serializers.ModelSerializer):
         write_only=True
     )
     Category_display = serializers.CharField(source='Category', read_only=True)
+    reviews = ReviewSerializer(many=True, read_only=True)
 
     class Meta:
         model = Manga
-        fields = ("Title", "Author", "Description", "Release", "Is_Finished", "Chapters", "Artist", "Category","Image", "Rating", "RatingCount","Category_display")
+        fields = ("Title", "Author", "Description", "Release", "Is_Finished", "Chapters", "Artist", "Category", "Image", "Rating", "RatingCount", "Category_display", "reviews")
 
     def create(self, validated_data):
         categories = validated_data.pop('get_categories', [])
@@ -42,33 +51,28 @@ class MangaSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    bookmarks = MangaSerializer(many=True, read_only=True)
+    reviews = ReviewSerializer(many=True, read_only=True)
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'profile_image', 'about','bookmarks','favourite']
+        fields = ['id', 'username', 'email', 'profile_image', 'about', 'bookmarks', 'reviews', 'favourite']
         extra_kwargs = {
             'profile_image': {'required': False},
             'about': {'required': False},
         }
 
-        def save(self, *args, **kwargs):
-            # Хеширование пароля перед сохранением
-            if not self.pk or not User.objects.filter(pk=self.pk, password=self.password).exists():
-                self.password = make_password(self.password)
-            super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        # Хеширование пароля перед сохранением
+        if not self.pk or not User.objects.filter(pk=self.pk, password=self.password).exists():
+            self.password = make_password(self.password)
+        super().save(*args, **kwargs)
 
-        def __str__(self):
-            return self.username
+    def __str__(self):
+        return self.username
 
 
-
-class ReviewSerializer(serializers.ModelSerializer):
-    user = serializers.ReadOnlyField(source='user.username')
-    manga = serializers.ReadOnlyField(source='manga.Title')
-
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Review
-        fields = ['id', 'user', 'manga', 'text', 'rating', 'created_at']
-
-
-
-
+        model = Category
+        fields = ['name']
