@@ -15,19 +15,21 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = ['id', 'user', 'user_profile_image', 'text', 'rating', 'created_at']
 
+
 class MangaSerializer(serializers.ModelSerializer):
     categories = serializers.ListField(
         child=serializers.CharField(max_length=64),
         write_only=True
     )
     categories_display = serializers.SerializerMethodField()
+    reviews = ReviewSerializer(many=True, read_only=True)  # Добавлено поле для отзывов
 
     class Meta:
         model = Manga
         fields = (
             "id", "Title", "Author", "Description", "Release", "Is_Finished",
             "Chapters", "Artist", "categories", "Image", "Rating",
-            "RatingCount", "categories_display"
+            "RatingCount", "categories_display", "reviews"  # Добавлено поле для отзывов
         )
         read_only_fields = ("id",)
 
@@ -63,7 +65,6 @@ class MangaSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
-
 
 class UserSerializer(serializers.ModelSerializer):
     bookmarks = MangaSerializer(many=True, read_only=True)
