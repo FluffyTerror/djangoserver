@@ -76,7 +76,7 @@ class UserUpdateView(generics.UpdateAPIView): # PATCH изменение юзе�
         return user
 
 
-class MangaCreateView(APIView): # POST создать мангу
+class MangaCreateView(APIView):  # POST создать мангу
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
@@ -85,7 +85,6 @@ class MangaCreateView(APIView): # POST создать мангу
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class MangaDetailView(generics.RetrieveAPIView): # GET конкретный тайтл
     permission_classes = [IsAuthenticatedOrReadOnly]
