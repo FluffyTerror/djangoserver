@@ -19,6 +19,8 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'user_profile_image', 'text', 'rating', 'created_at', 'manga_id', 'manga_title']
 
 
+
+
 class MangaSerializer(serializers.ModelSerializer):
     categories = serializers.ListField(
         child=serializers.CharField(max_length=64),
@@ -34,21 +36,30 @@ class MangaSerializer(serializers.ModelSerializer):
             "Chapters", "Artist", "categories", "Image", "Rating",
             "RatingCount", "categories_display", "reviews"  # Добавлено поле для отзывов
         )
-        read_only_fields = ("id",)
+        read_only_fields = ("id", "Rating", "RatingCount")
 
     def get_categories_display(self, obj):
         return [category.name for category in obj.Category.all()]
 
     def create(self, validated_data):
+        # Извлекаем категории из валидированных данных
         categories_data = validated_data.pop('categories')
+
+        # Создаём объект манги
         manga = Manga.objects.create(**validated_data)
+
+        # Добавляем категории к манге
         for category_name in categories_data:
             category, created = Category.objects.get_or_create(name=category_name)
             manga.Category.add(category)
+
         return manga
 
     def update(self, instance, validated_data):
+        # Извлекаем категории, если они предоставлены
         categories_data = validated_data.pop('categories', None)
+
+        # Обновляем основные поля
         instance.Title = validated_data.get('Title', instance.Title)
         instance.Author = validated_data.get('Author', instance.Author)
         instance.Description = validated_data.get('Description', instance.Description)
@@ -57,16 +68,17 @@ class MangaSerializer(serializers.ModelSerializer):
         instance.Chapters = validated_data.get('Chapters', instance.Chapters)
         instance.Artist = validated_data.get('Artist', instance.Artist)
         instance.Image = validated_data.get('Image', instance.Image)
-        instance.RatingCount = validated_data.get('RatingCount', instance.RatingCount)
-        instance.Rating = validated_data.get('Rating', instance.Rating)
 
-        if categories_data:
+        # Если категории были переданы, обновляем их
+        if categories_data is not None:
             instance.Category.clear()
             for category_name in categories_data:
                 category, created = Category.objects.get_or_create(name=category_name)
                 instance.Category.add(category)
 
+        # Сохраняем объект манги
         instance.save()
+
         return instance
 
 

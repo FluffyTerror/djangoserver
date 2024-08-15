@@ -1,6 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.http import FileResponse, Http404, HttpResponse
 from rest_framework import generics, status
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,8 +14,10 @@ from .models import User, Manga,Review
 from .serializers import UserSerializer, MangaSerializer, ReviewSerializer
 
 
+
 class MangaIdView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
+    authentication_classes = [JWTAuthentication]
 
     def post(self, request, *args, **kwargs):
         manga_id = request.data.get('id')
@@ -24,14 +29,59 @@ class MangaIdView(APIView):
         except Manga.DoesNotExist:
             return Response({"error": "Manga not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = MangaSerializer(manga)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        # Сериализация манги
+        manga_serializer = MangaSerializer(manga)
+
+        # Ищем отзыв текущего пользователя, если пользователь аутентифицирован
+        user_review = None
+        is_in_bookmarks = False
+        if request.user.is_authenticated:
+            try:
+                user_review = Review.objects.get(user=request.user, manga=manga)
+                user_review_serializer = ReviewSerializer(user_review)
+            except Review.DoesNotExist:
+                user_review_serializer = None
+
+            # Проверяем, есть ли тайтл в закладках пользователя
+            is_in_bookmarks = manga in request.user.bookmarks.all()
+
+        # Подготавливаем ответ
+        response_data = {
+            "manga": manga_serializer.data,
+            "user_review": user_review_serializer.data if user_review_serializer else None,
+            "is_in_bookmarks": is_in_bookmarks
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class MangaListView(generics.ListAPIView):  # GET все тайтлы
     permission_classes = [IsAuthenticatedOrReadOnly]
     queryset = Manga.objects.all()
     serializer_class = MangaSerializer
+
+
+class Userimg(APIView):
+    # Разрешаем доступ всем пользователям
+    permission_classes = []
+
+    def get(self, request, username=None, *args, **kwargs):
+        # Ищем пользователя по username
+        user = get_object_or_404(User, username=username)
+
+        # Получаем изображение профиля пользователя
+        profile_image = user.profile_image
+
+        if not profile_image:
+            raise Http404("User does not have a profile image.")
+
+        # Открываем файл изображения и возвращаем его в ответе
+        try:
+            with open(profile_image.path, 'rb') as image_file:
+                return HttpResponse(image_file.read(), content_type="image/jpeg")
+        except FileNotFoundError:
+            raise Http404("Image file not found.")
+
 
 
 class ProfileView(APIView):
@@ -106,20 +156,29 @@ class MangaUpdateView(generics.UpdateAPIView):  # PUT change attr in manga
     serializer_class = MangaSerializer
 
 
-
-class AddBookmarkView(APIView): # POST добавить в закладки
+class AddBookmarkView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         user = request.user
         manga_id = request.data.get('manga_id')
+
         try:
             manga = Manga.objects.get(id=manga_id)
         except Manga.DoesNotExist:
             return Response({"error": "Manga not found"}, status=status.HTTP_404_NOT_FOUND)
-        user.bookmarks.add(manga)
-        user.save()
-        return Response({"status": "Manga added to bookmarks"}, status=status.HTTP_200_OK)
+
+        # Проверяем, находится ли манга уже в закладках пользователя
+        if manga in user.bookmarks.all():
+            # Если манга уже в закладках, удаляем её
+            user.bookmarks.remove(manga)
+            user.save()
+            return Response({"status": "Manga removed from bookmarks"}, status=status.HTTP_200_OK)
+        else:
+            # Если манги нет в закладках, добавляем её
+            user.bookmarks.add(manga)
+            user.save()
+            return Response({"status": "Manga added to bookmarks"}, status=status.HTTP_200_OK)
 
 
 class AddFavouriteView(APIView):# POST добавить в избранное
@@ -138,7 +197,7 @@ class AddFavouriteView(APIView):# POST добавить в избранное
         return Response({"status": "Manga added to favourite"}, status=status.HTTP_200_OK)
 
 
-class AddReviewView(generics.CreateAPIView):  # POST создать отзыв
+class AddOrUpdateReviewView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ReviewSerializer
 
@@ -146,11 +205,20 @@ class AddReviewView(generics.CreateAPIView):  # POST создать отзыв
         manga_id = self.kwargs['manga_id']
         manga = Manga.objects.get(id=manga_id)
 
-        review = serializer.save(user=self.request.user, manga=manga)
+        # Попытка найти существующий отзыв
+        review, created = Review.objects.update_or_create(
+            user=self.request.user,
+            manga=manga,
+            defaults={'text': serializer.validated_data['text'], 'rating': serializer.validated_data['rating']}
+        )
 
-        manga.RatingCount += 1
-        new_rating = (manga.Rating * (manga.RatingCount - 1) + review.rating) / manga.RatingCount
-        manga.Rating = round(new_rating, 2)
+        if created:
+            manga.RatingCount += 1
+
+        # Пересчитываем средний рейтинг
+        all_reviews = manga.reviews.all()
+        total_rating = sum([r.rating for r in all_reviews])
+        manga.Rating = round(total_rating / manga.RatingCount, 2)
         manga.save()
 
 

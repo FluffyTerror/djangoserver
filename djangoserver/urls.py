@@ -25,8 +25,10 @@ urlpatterns = [
     path('manga/<int:pk>/update/', MangaUpdateView.as_view(), name='manga-update'),
     path('manga/add_favourite/', AddFavouriteView.as_view(), name='manga-favourite'),
     path('manga/add_bookmark/', AddBookmarkView.as_view(), name='manga-bookmark'),
-    path('manga/<int:manga_id>/add_review/', AddReviewView.as_view(), name='add-review'),
+    path('manga/<int:manga_id>/add_review/', AddOrUpdateReviewView.as_view(), name='add_or_update_review'),
     path('manga/<int:manga_id>/reviews/', MangaReviewsView.as_view(), name='manga-reviews'),
+    path('user_img/<str:username>/',Userimg.as_view(),name='userimg'),
+    #path('review/<int:pk>/update/', UpdateReviewView.as_view(), name='update_review'),
 
     path('register/', CustomUserCreate.as_view(), name="create_user"),
     path('logout/', LogoutAPIView.as_view(), name='logout'),
