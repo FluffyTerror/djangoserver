@@ -14,9 +14,9 @@ from MangaLib.views import *
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-   # path('user/', UserListView.as_view(), name='user-list'),
-    path('user/', UsernameView.as_view(), name='user-by-nickname'),
-    path('user/<str:nickname>/update/', UserUpdateView.as_view(), name='user-update'),
+    path('profile/', ProfileView.as_view(), name='profile view'),
+    path('user/update/', UserUpdateView.as_view(), name='user-update'),
+    path('user/', UsernameView.as_view(), name = 'userview'),
 
     path('manga/find/', MangaIdView.as_view(), name='manga-get-by-id'),
     path('manga/create/', MangaCreateView.as_view(), name='manga-create'),
@@ -28,7 +28,6 @@ urlpatterns = [
     path('manga/<int:manga_id>/add_review/', AddReviewView.as_view(), name='add-review'),
     path('manga/<int:manga_id>/reviews/', MangaReviewsView.as_view(), name='manga-reviews'),
 
-
     path('register/', CustomUserCreate.as_view(), name="create_user"),
     path('logout/', LogoutAPIView.as_view(), name='logout'),
     path('login/', CustomUserLogin.as_view(), name='user-login'),
@@ -37,7 +36,7 @@ urlpatterns = [
 
 
 
-
+    path('search/',MangaSearchView.as_view(), name='search'),
     path('get_token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
