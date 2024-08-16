@@ -15,8 +15,15 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-MEDIA_URL = '/media/manga/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media/manga')
+# Media URL and Root for overall media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Path for storing user images in the 'Users' directory
+USERS_MEDIA_ROOT = os.path.join(MEDIA_ROOT, 'Users')
+
+# Path for storing manga files in the 'Manga' directory
+MANGA_MEDIA_ROOT = os.path.join(MEDIA_ROOT, 'Manga')
 
 
 # Quick-start development settings - unsuitable for production

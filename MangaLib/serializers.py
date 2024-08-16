@@ -1,11 +1,15 @@
+import os
+import zipfile
+
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password, check_password, is_password_usable
+from django.core.files.base import ContentFile
+from django.utils.text import slugify
 from rest_framework import serializers
 from rest_framework.response import Response
 
 
-from MangaLib.models import Manga, User, Review, Category
-
+from MangaLib.models import Manga, User, Review, Category, MangaPage
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -19,7 +23,83 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'user_profile_image', 'text', 'rating', 'created_at', 'manga_id', 'manga_title']
 
 
+class MangaZipSerializer(serializers.Serializer):
+    zip_file = serializers.FileField()
+    volume = serializers.IntegerField()
+    chapter = serializers.IntegerField()
 
+    def create(self, validated_data):
+        # Получаем ID манги из контекста
+        manga_id = self.context.get('manga_id')
+        if not manga_id:
+            raise serializers.ValidationError("ID манги не передан в контексте.")
+
+        # Находим мангу по ID
+        try:
+            manga = Manga.objects.get(id=manga_id)
+        except Manga.DoesNotExist:
+            raise serializers.ValidationError("Манга с таким ID не существует.")
+
+        # Получаем полное название манги
+        manga_title = manga.Title
+        if not manga_title:
+            raise serializers.ValidationError("Название манги не указано.")
+
+        # Основной путь для манги
+        manga_dir = os.path.join('media/manga', manga_title)
+
+        # Создаем папки для обложки, томов и глав
+        cover_dir = os.path.join(manga_dir, 'cover')
+        volume_dir = os.path.join(manga_dir, f'volume_{validated_data.get("volume")}')
+        chapter_dir = os.path.join(volume_dir, f'chapter_{validated_data.get("chapter")}')
+
+        # Убедитесь, что папки созданы
+        os.makedirs(cover_dir, exist_ok=True)
+        os.makedirs(volume_dir, exist_ok=True)
+        os.makedirs(chapter_dir, exist_ok=True)
+
+        # Распаковываем ZIP файл
+        zip_file = validated_data.get('zip_file')
+        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+            # Сначала ищем обложку
+            cover_image = None
+            for file_name in zip_ref.namelist():
+                if file_name.lower().endswith(('cover.jpg', 'cover.jpeg', 'cover.png')):
+                    cover_image = zip_ref.read(file_name)
+                    break
+
+            # Сохраняем обложку, если она найдена
+            if cover_image:
+                cover_path = os.path.join(cover_dir, 'cover.jpg')
+                with open(cover_path, 'wb') as f:
+                    f.write(cover_image)
+                # Обновляем поле обложки в модели
+                manga.Image = f'manga/{manga_title}/cover/cover.jpg'
+                manga.save()
+
+            # Сохраняем страницы манги с нумерацией
+            image_files = sorted([file_name for file_name in zip_ref.namelist() if
+                                  file_name.endswith(('.jpg', '.jpeg', '.png')) and 'cover' not in file_name.lower()])
+
+            for index, file_name in enumerate(image_files, start=1):
+                file_data = zip_ref.read(file_name)
+                new_file_name = f"{index}.jpg"
+                file_path = os.path.join(chapter_dir, new_file_name)
+
+                # Сохраняем файл
+                with open(file_path, 'wb') as f:
+                    f.write(file_data)
+
+                # Создаем объект страницы манги
+                MangaPage.objects.create(
+                    manga=manga,
+                    volume=validated_data.get('volume'),
+                    chapter=validated_data.get('chapter'),
+                    page_number=index,
+                    page_image=f'manga/{manga_title}/volume_{validated_data.get("volume")}/chapter_{validated_data.get("chapter")}/{new_file_name}'
+                )
+
+        return manga
 
 class MangaSerializer(serializers.ModelSerializer):
     categories = serializers.ListField(
@@ -32,7 +112,7 @@ class MangaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Manga
         fields = (
-            "id", "Title", "Author", "Description", "Release", "Is_Finished",
+            "id", "Title", "Author", "Description", "Release", "Status",
             "Chapters", "Artist", "categories", "Image", "Rating",
             "RatingCount", "categories_display", "reviews"  # Добавлено поле для отзывов
         )
@@ -64,7 +144,7 @@ class MangaSerializer(serializers.ModelSerializer):
         instance.Author = validated_data.get('Author', instance.Author)
         instance.Description = validated_data.get('Description', instance.Description)
         instance.Release = validated_data.get('Release', instance.Release)
-        instance.Is_Finished = validated_data.get('Is_Finished', instance.Is_Finished)
+        instance.Is_Finished = validated_data.get('Status', instance.Is_Finished)
         instance.Chapters = validated_data.get('Chapters', instance.Chapters)
         instance.Artist = validated_data.get('Artist', instance.Artist)
         instance.Image = validated_data.get('Image', instance.Image)

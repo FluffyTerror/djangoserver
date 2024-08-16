@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.http import FileResponse, Http404, HttpResponse
-from rest_framework import generics, status
+from rest_framework import generics, status, views
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
@@ -11,7 +11,23 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, Manga,Review
-from .serializers import UserSerializer, MangaSerializer, ReviewSerializer
+from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, MangaZipSerializer
+
+
+
+class MangaUploadView(views.APIView):
+    def post(self, request, manga_id):
+        try:
+            manga = Manga.objects.get(id=manga_id)
+        except Manga.DoesNotExist:
+            return Response({'error': 'Manga not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = MangaZipSerializer(data=request.data, context={'manga_id': manga_id})
+        if serializer.is_valid():
+            manga = serializer.save()
+            return Response({'message': 'Manga uploaded successfully'}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 
