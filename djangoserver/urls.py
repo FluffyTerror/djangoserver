@@ -20,6 +20,12 @@ urlpatterns = [
     path('user_img/<str:username>/', Userimg.as_view(), name='user_image'),
 
 
+    path('news/', NewsListView.as_view(), name='news-list'),
+    path('news/create/', NewsCreateView.as_view(), name='news-create'),
+    path('news/<int:id>/', NewsDetailView.as_view(), name='news-detail'),
+
+
+
     path('manga/find/', MangaIdView.as_view(), name='manga-get-by-id'),
     path('manga/create/', MangaCreateView.as_view(), name='manga-create'),
     path('manga/', MangaListView.as_view(), name='manga-list'),

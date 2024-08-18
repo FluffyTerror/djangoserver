@@ -98,8 +98,14 @@ class User(AbstractUser):
         return self.email
 
 
+class News(models.Model):
+    User = models.ForeignKey(User, on_delete=models.CASCADE, related_name='news')
+    Title = models.CharField(max_length=255)
+    Content = models.TextField()
+    Created_at = models.DateTimeField(auto_now_add=True)
 
-
+    def __str__(self):
+        return self.Title
 
 
 

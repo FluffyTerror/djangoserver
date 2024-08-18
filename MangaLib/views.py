@@ -3,17 +3,33 @@ from django.db.models import Q
 from django.http import FileResponse, Http404, HttpResponse
 from rest_framework import generics, status, views
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import get_object_or_404
+from rest_framework.generics import get_object_or_404, ListAPIView, CreateAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import User, Manga,Review
-from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, MangaZipSerializer
+from .models import User, Manga, Review, News
+from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, MangaZipSerializer, NewsSerializer
 
 
+class NewsDetailView(RetrieveAPIView):
+    queryset = News.objects.all()
+    serializer_class = NewsSerializer
+    lookup_field = 'id'
+
+
+class NewsCreateView(CreateAPIView):
+    queryset = News.objects.all()
+    serializer_class = NewsSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(User=self.request.user)
+
+class NewsListView(ListAPIView):
+    queryset = News.objects.all()
+    serializer_class = NewsSerializer
 
 class MangaUploadView(views.APIView):
     def post(self, request, manga_id):

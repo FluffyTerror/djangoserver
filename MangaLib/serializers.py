@@ -9,7 +9,7 @@ from rest_framework import serializers
 from rest_framework.response import Response
 
 
-from MangaLib.models import Manga, User, Review, Category, MangaPage
+from MangaLib.models import Manga, User, Review, Category, MangaPage, News
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -190,3 +190,10 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['name']
+
+
+
+class NewsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = News
+        fields = ['id', 'Title', 'Content', 'Created_at']
