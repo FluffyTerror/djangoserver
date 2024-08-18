@@ -27,6 +27,7 @@ class MangaZipSerializer(serializers.Serializer):
     zip_file = serializers.FileField()
     volume = serializers.IntegerField()
     chapter = serializers.IntegerField()
+    chapter_title = serializers.CharField()
 
     def create(self, validated_data):
         # Получаем ID манги из контекста
@@ -48,10 +49,16 @@ class MangaZipSerializer(serializers.Serializer):
         # Основной путь для манги
         manga_dir = os.path.join('media/manga', manga_title)
 
-        # Создаем папки для обложки, томов и глав
+        # Получаем название тома и главы
+        volume = validated_data.get('volume')
+        chapter = validated_data.get('chapter')
+        chapter_title = validated_data.get('chapter_title')
+
+        # Создаем папки для обложки, томов и глав с использованием полного названия главы
         cover_dir = os.path.join(manga_dir, 'cover')
-        volume_dir = os.path.join(manga_dir, f'volume_{validated_data.get("volume")}')
-        chapter_dir = os.path.join(volume_dir, f'chapter_{validated_data.get("chapter")}')
+        volume_dir = os.path.join(manga_dir, f'volume_{volume}')
+        # Папка главы теперь будет включать полное название главы
+        chapter_dir = os.path.join(volume_dir, f'{chapter_title}')
 
         # Убедитесь, что папки созданы
         os.makedirs(cover_dir, exist_ok=True)
@@ -93,10 +100,11 @@ class MangaZipSerializer(serializers.Serializer):
                 # Создаем объект страницы манги
                 MangaPage.objects.create(
                     manga=manga,
-                    volume=validated_data.get('volume'),
-                    chapter=validated_data.get('chapter'),
+                    volume=volume,
+                    chapter=chapter,
                     page_number=index,
-                    page_image=f'manga/{manga_title}/volume_{validated_data.get("volume")}/chapter_{validated_data.get("chapter")}/{new_file_name}'
+                    page_image=f'manga/{manga_title}/volume_{volume}/chapter_{chapter}_{chapter_title}/{new_file_name}',
+                    Chapter_Title=chapter_title  # Сохраняем название главы в поле модели
                 )
 
         return manga

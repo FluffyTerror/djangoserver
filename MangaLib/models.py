@@ -57,17 +57,18 @@ class Manga(models.Model):
 class MangaPage(models.Model):
     manga = models.ForeignKey(Manga, related_name='pages', on_delete=models.CASCADE)
     page_image = models.ImageField(upload_to=manga_pages_directory_path)
-    volume = models.IntegerField(default=1)  # Новое поле для тома
-    chapter = models.IntegerField(default=1)  # Новое поле для главы
+    volume = models.IntegerField(default=1)
+    chapter = models.IntegerField(default=1)
     page_number = models.IntegerField(default=1)
+    Chapter_Title = models.CharField(max_length=128,default="Chapter title")
 
     class Meta:
-        unique_together = ('manga', 'volume', 'chapter', 'page_image')
+        unique_together = ('manga', 'volume', 'chapter', 'page_image','Chapter_Title')
 
     def __str__(self):
-        return f"Volume {self.volume}, Chapter {self.chapter}, Page {self.page_number}"
+        return f"Volume {self.volume}, Chapter {self.chapter}, Page {self.page_number} ,Chapter_Title{self.Chapter_Title} "
 
-
+#
 
 
 
