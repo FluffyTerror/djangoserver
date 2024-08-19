@@ -25,7 +25,6 @@ urlpatterns = [
     path('news/<int:id>/', NewsDetailView.as_view(), name='news-detail'),
 
 
-
     path('manga/find/', MangaIdView.as_view(), name='manga-get-by-id'),
     path('manga/create/', MangaCreateView.as_view(), name='manga-create'),
     path('manga/', MangaListView.as_view(), name='manga-list'),
@@ -39,15 +38,21 @@ urlpatterns = [
     path('upload_manga/<int:manga_id>/', MangaUploadView.as_view(), name='upload_manga'),
 
 
+    path('popular/',PopularMangaView.as_view(),name='popular on main page'),
+    path('new/',NewReleasesView.as_view(),name='new on main page'),
+
+
+
+
+
     path('register/', CustomUserCreate.as_view(), name="create_user"),
     path('logout/', LogoutAPIView.as_view(), name='logout'),
     path('login/', CustomUserLogin.as_view(), name='user-login'),
 
 
-
-
-
-    path('search/',MangaSearchView.as_view(), name='search'),
+    path('search/title/',MangaTitleSearchView.as_view(), name='title search'),
+    path('search/author/', MangaAuthorSearchView.as_view(), name='author search'),
+    path('search/publisher/', MangaArtistSearchView.as_view(), name='publisher search'),
 
 
     path('get_token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

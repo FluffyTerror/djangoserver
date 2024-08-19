@@ -329,16 +329,14 @@ class LogoutAPIView(APIView):# POST разалогинить юзера
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class MangaSearchView(APIView):
+class MangaTitleSearchView(APIView):
     def post(self, request, *args, **kwargs):
         query = request.data.get('query', None)
 
         if query:
             # Поиск по тайтлу, автору и художнику
             mangas = Manga.objects.filter(
-                Q(Title__icontains=query) |
-                Q(Author__icontains=query) |
-                Q(Artist__icontains=query)
+                Q(Title__icontains=query)
             ).distinct()
 
             # Сериализация и возврат данных
@@ -346,4 +344,58 @@ class MangaSearchView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response({"error": "No query parameter provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class MangaAuthorSearchView(APIView):
+    def post(self, request, *args, **kwargs):
+        query = request.data.get('query', None)
+
+        if query:
+            # Поиск по тайтлу, автору и художнику
+            mangas = Manga.objects.filter(
+                Q(Author__icontains=query)
+            ).distinct()
+
+            # Сериализация и возврат данных
+            serializer = MangaSerializer(mangas, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "No query parameter provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MangaArtistSearchView(APIView):
+    def post(self, request, *args, **kwargs):
+        query = request.data.get('query', None)
+
+        if query:
+            mangas = Manga.objects.filter(
+                Q(Artist__icontains=query)
+            ).distinct()
+
+            serializer = MangaSerializer(mangas, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "No query parameter provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class PopularMangaView(ListAPIView):
+    serializer_class = MangaSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        # Сортируем манги по количеству отзывов и рейтингу
+        return Manga.objects.order_by('-RatingCount', '-Rating')[:6]  # Топ-6 манг
+
+
+
+class NewReleasesView(ListAPIView):
+    serializer_class = MangaSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        # Возвращаем манги, отсортированные по дате создания (сначала новые)
+        return Manga.objects.order_by('-Created_at')[:6]  # Топ-6 новинок
+
 

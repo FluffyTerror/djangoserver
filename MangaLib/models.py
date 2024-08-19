@@ -8,6 +8,7 @@ from django.db import models
 from django.utils.text import slugify
 
 
+
 class Category(models.Model):
     name = models.CharField(max_length=64, unique=True)
 
@@ -40,6 +41,7 @@ class Manga(models.Model):
     Rating = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(10)])
     RatingCount = models.IntegerField(default=0)
     Category = models.ManyToManyField(Category, related_name='manga')
+    Created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.Title

@@ -115,14 +115,14 @@ class MangaSerializer(serializers.ModelSerializer):
         write_only=True
     )
     categories_display = serializers.SerializerMethodField()
-    reviews = ReviewSerializer(many=True, read_only=True)  # Добавлено поле для отзывов
+   # reviews = ReviewSerializer(many=True, read_only=True)  # Добавлено поле для отзывов
 
     class Meta:
         model = Manga
         fields = (
             "id", "Title", "Author", "Description", "Release", "Status",
             "Chapters", "Artist", "categories", "Image", "Rating",
-            "RatingCount", "categories_display", "reviews"  # Добавлено поле для отзывов
+            "RatingCount", "categories_display","Created_at"
         )
         read_only_fields = ("id", "Rating", "RatingCount")
 
