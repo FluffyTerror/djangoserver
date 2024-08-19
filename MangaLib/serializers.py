@@ -200,8 +200,15 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['name']
 
 
+class UserBriefSerializer(serializers.ModelSerializer):# костыль для новостей
+    class Meta:
+        model = User
+        fields = ['username', 'profile_image']
+
 
 class NewsSerializer(serializers.ModelSerializer):
+    User = UserBriefSerializer(read_only=True)
+
     class Meta:
         model = News
-        fields = ['id', 'Title', 'Content', 'Created_at']
+        fields = ['User','id', 'Title', 'Content', 'Created_at']
