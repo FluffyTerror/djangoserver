@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.http import FileResponse, Http404, HttpResponse
@@ -12,7 +14,7 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, Manga, Review, News
 from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, MangaZipSerializer, NewsSerializer
-
+from rest_framework import filters
 
 class NewsDetailView(RetrieveAPIView):
     queryset = News.objects.all()
@@ -387,6 +389,43 @@ class PopularMangaView(ListAPIView):
     def get_queryset(self):
         # Сортируем манги по количеству отзывов и рейтингу
         return Manga.objects.order_by('-RatingCount', '-Rating')[:6]  # Топ-6 манг
+
+
+class AllPopularMangaView(APIView):
+    serializer_class = MangaSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        # Получаем параметры из тела запроса
+        tags = request.data.get('tags', [])  # список тегов
+        time_filter = request.data.get('time_filter')  # фильтр по времени
+
+        # Получаем начальный queryset
+        queryset = Manga.objects.all()
+
+        # Фильтрация по тегам
+        if tags:
+            queryset = queryset.filter(Category__name__in=tags).distinct()
+
+        # Фильтрация по времени
+        if time_filter == 'day':
+            queryset = queryset.filter(Created_at__gte=datetime.now() - timedelta(days=1))
+        elif time_filter == 'week':
+            queryset = queryset.filter(Created_at__gte=datetime.now() - timedelta(weeks=1))
+        elif time_filter == 'month':
+            queryset = queryset.filter(Created_at__gte=datetime.now() - timedelta(days=30))
+        elif time_filter == 'year':
+            queryset = queryset.filter(Created_at__gte=datetime.now() - timedelta(days=365))
+
+        # Сортировка по количеству отзывов и рейтингу
+        queryset = queryset.order_by('-RatingCount', '-Rating')[:100]
+
+        # Сериализация данных
+        serializer = self.serializer_class(queryset, many=True)
+
+        # Возвращаем результат
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 

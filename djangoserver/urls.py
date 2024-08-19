@@ -38,6 +38,8 @@ urlpatterns = [
     path('upload_manga/<int:manga_id>/', MangaUploadView.as_view(), name='upload_manga'),
 
 
+
+    path('popular_manga/', AllPopularMangaView.as_view(), name='popular page'),
     path('popular/',PopularMangaView.as_view(),name='popular on main page'),
     path('new/',NewReleasesView.as_view(),name='new on main page'),
 
