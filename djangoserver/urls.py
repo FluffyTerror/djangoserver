@@ -18,6 +18,7 @@ urlpatterns = [
     path('user/update/', UserUpdateView.as_view(), name='user-update'),
     path('user/', UsernameView.as_view(), name = 'user_view'),
     path('user_img/<str:username>/', Userimg.as_view(), name='user_image'),
+    path('user/bookmarks/', UserBookmarksView.as_view(), name='user-bookmarks'),
 
 
     path('news/', NewsListView.as_view(), name='news-list'),
@@ -44,7 +45,7 @@ urlpatterns = [
     path('new/',NewReleasesView.as_view(),name='new on main page'),
 
 
-
+    path('tags/', CategoryListView.as_view(), name='tags-list'),
 
 
     path('register/', CustomUserCreate.as_view(), name="create_user"),

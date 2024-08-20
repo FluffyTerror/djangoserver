@@ -12,8 +12,9 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import User, Manga, Review, News
-from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, MangaZipSerializer, NewsSerializer
+from .models import User, Manga, Review, News, Category
+from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, MangaZipSerializer, NewsSerializer, \
+    CategorySerializer
 from rest_framework import filters
 
 class NewsDetailView(RetrieveAPIView):
@@ -240,13 +241,21 @@ class AddOrUpdateReviewView(generics.CreateAPIView):
         manga = Manga.objects.get(id=manga_id)
 
         # Попытка найти существующий отзыв
-        review, created = Review.objects.update_or_create(
-            user=self.request.user,
-            manga=manga,
-            defaults={'text': serializer.validated_data['text'], 'rating': serializer.validated_data['rating']}
-        )
-
-        if created:
+        try:
+            review = Review.objects.get(user=self.request.user, manga=manga)
+            # Обновляем существующий отзыв
+            review.text = serializer.validated_data['text']
+            review.rating = serializer.validated_data['rating']
+            review.save()
+        except Review.DoesNotExist:
+            # Создаем новый отзыв
+            review = Review.objects.create(
+                user=self.request.user,
+                manga=manga,
+                text=serializer.validated_data['text'],
+                rating=serializer.validated_data['rating']
+            )
+            # Увеличиваем счетчик отзывов
             manga.RatingCount += 1
 
         # Пересчитываем средний рейтинг
@@ -255,6 +264,7 @@ class AddOrUpdateReviewView(generics.CreateAPIView):
         manga.Rating = round(total_rating / manga.RatingCount, 2)
         manga.save()
 
+        serializer.instance = review
 
 
 class MangaReviewsView(generics.ListAPIView): # GET список отзывов
@@ -400,7 +410,7 @@ class AllPopularMangaView(APIView):
         tags = request.data.get('tags', [])  # список тегов
         time_filter = request.data.get('time_filter')  # фильтр по времени
 
-        # Получаем начальный queryset
+        # Получаем начальный queryset для манги
         queryset = Manga.objects.all()
 
         # Фильтрация по тегам
@@ -420,11 +430,15 @@ class AllPopularMangaView(APIView):
         # Сортировка по количеству отзывов и рейтингу
         queryset = queryset.order_by('-RatingCount', '-Rating')[:100]
 
-        # Сериализация данных
-        serializer = self.serializer_class(queryset, many=True)
+        # Получаем все категории (теги)
 
-        # Возвращаем результат
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        # Сериализация данных
+        manga_serializer = self.serializer_class(queryset, many=True)
+
+        # Возвращаем результат с мангой и списком тегов
+        return Response({
+            'manga': manga_serializer.data,
+        }, status=status.HTTP_200_OK)
 
 
 
@@ -438,3 +452,18 @@ class NewReleasesView(ListAPIView):
         return Manga.objects.order_by('-Created_at')[:6]  # Топ-6 новинок
 
 
+
+class UserBookmarksView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        bookmarks = user.bookmarks.all()  # Получаем все манги из закладок пользователя
+        serializer = MangaSerializer(bookmarks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+class CategoryListView(ListAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer

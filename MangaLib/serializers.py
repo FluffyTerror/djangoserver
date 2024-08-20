@@ -14,13 +14,19 @@ from MangaLib.models import Manga, User, Review, Category, MangaPage, News
 
 class ReviewSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
-    user_profile_image = serializers.ImageField(source='user.profile_image', read_only=True)
+    user_profile_image = serializers.SerializerMethodField()  # Используем метод для корректировки пути
     manga_id = serializers.ReadOnlyField(source='manga.id')
     manga_title = serializers.ReadOnlyField(source='manga.Title')  # Добавляем название манги
 
     class Meta:
         model = Review
         fields = ['id', 'user', 'user_profile_image', 'text', 'rating', 'created_at', 'manga_id', 'manga_title']
+
+    def get_user_profile_image(self, obj):
+        # Приведение пути к относительному формату для профиля пользователя
+        if obj.user.profile_image:
+            return obj.user.profile_image.url  # Возвращаем относительный путь
+        return None
 
 
 class MangaZipSerializer(serializers.Serializer):
@@ -109,12 +115,20 @@ class MangaZipSerializer(serializers.Serializer):
 
         return manga
 
+    def get_Image(self, obj):
+        # Приведение пути к относительному формату
+        if obj.Image:
+            # Убираем домен и возвращаем только относительный путь
+            return obj.Image.url
+        return None
+
 class MangaSerializer(serializers.ModelSerializer):
     categories = serializers.ListField(
         child=serializers.CharField(max_length=64),
         write_only=True
     )
     categories_display = serializers.SerializerMethodField()
+    Image = serializers.SerializerMethodField()  # Приводим Image к относительному пути
    # reviews = ReviewSerializer(many=True, read_only=True)  # Добавлено поле для отзывов
 
     class Meta:
@@ -169,10 +183,17 @@ class MangaSerializer(serializers.ModelSerializer):
 
         return instance
 
+    def get_Image(self, obj):
+        # Приведение пути к относительному формату для изображения манги
+        if obj.Image:
+            return obj.Image.url  # Возвращаем относительный путь
+        return None
+
 
 class UserSerializer(serializers.ModelSerializer):
     bookmarks = MangaSerializer(many=True, read_only=True)
     reviews = ReviewSerializer(many=True, read_only=True)
+   # profile_image = serializers.SerializerMethodField()  # Приводим profile_image к относительному пути
 
     class Meta:
         model = User
@@ -194,6 +215,8 @@ class UserSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
@@ -204,6 +227,14 @@ class UserBriefSerializer(serializers.ModelSerializer):# костыль для �
     class Meta:
         model = User
         fields = ['username', 'profile_image']
+        profile_image = serializers.SerializerMethodField()  # Приводим profile_image к относительному пути
+
+    def get_profile_image(self, obj):
+        # Приведение пути к относительному формату для изображения профиля пользователя
+        if obj.profile_image:
+            return obj.profile_image.url  # Возвращаем относительный путь
+        return None
+
 
 
 class NewsSerializer(serializers.ModelSerializer):
