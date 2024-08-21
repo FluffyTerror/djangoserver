@@ -128,15 +128,15 @@ class MangaSerializer(serializers.ModelSerializer):
         write_only=True
     )
     categories_display = serializers.SerializerMethodField()
+    Status = serializers.ChoiceField(choices=Manga.STATUS_CHOICES)  # Используем ChoiceField для статуса
     Image = serializers.SerializerMethodField()  # Приводим Image к относительному пути
-   # reviews = ReviewSerializer(many=True, read_only=True)  # Добавлено поле для отзывов
 
     class Meta:
         model = Manga
         fields = (
             "id", "Title", "Author", "Description", "Release", "Status",
             "Chapters", "Artist", "categories", "Image", "Rating",
-            "RatingCount", "categories_display","Created_at"
+            "RatingCount", "categories_display", "Created_at"
         )
         read_only_fields = ("id", "Rating", "RatingCount")
 
@@ -166,7 +166,7 @@ class MangaSerializer(serializers.ModelSerializer):
         instance.Author = validated_data.get('Author', instance.Author)
         instance.Description = validated_data.get('Description', instance.Description)
         instance.Release = validated_data.get('Release', instance.Release)
-        instance.Is_Finished = validated_data.get('Status', instance.Is_Finished)
+        instance.Status = validated_data.get('Status', instance.Status)
         instance.Chapters = validated_data.get('Chapters', instance.Chapters)
         instance.Artist = validated_data.get('Artist', instance.Artist)
         instance.Image = validated_data.get('Image', instance.Image)
@@ -188,7 +188,6 @@ class MangaSerializer(serializers.ModelSerializer):
         if obj.Image:
             return obj.Image.url  # Возвращаем относительный путь
         return None
-
 
 class UserSerializer(serializers.ModelSerializer):
     bookmarks = MangaSerializer(many=True, read_only=True)
@@ -221,6 +220,7 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['name']
+
 
 
 class UserBriefSerializer(serializers.ModelSerializer):# костыль для новостей

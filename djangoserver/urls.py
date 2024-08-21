@@ -43,9 +43,12 @@ urlpatterns = [
     path('popular_manga/', AllPopularMangaView.as_view(), name='popular page'),
     path('popular/',PopularMangaView.as_view(),name='popular on main page'),
     path('new/',NewReleasesView.as_view(),name='new on main page'),
+    path('catalog/',CatalogListView.as_view(),name='catalog page'),
 
 
     path('tags/', CategoryListView.as_view(), name='tags-list'),
+    path('statuses/', StatusListView.as_view(), name='status-list'),
+
 
 
     path('register/', CustomUserCreate.as_view(), name="create_user"),

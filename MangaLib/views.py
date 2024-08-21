@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db.models import Q,Count
 from django.http import FileResponse, Http404, HttpResponse
 from rest_framework import generics, status, views
 from rest_framework.exceptions import PermissionDenied
@@ -16,6 +16,62 @@ from .models import User, Manga, Review, News, Category
 from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, MangaZipSerializer, NewsSerializer, \
     CategorySerializer
 from rest_framework import filters
+
+
+
+class CatalogListView(APIView):
+
+        def post(self, request):
+
+            sort_by = request.data.get('sort_by', 'popularity')  # По умолчанию сортировка по популярности
+            status_filter = request.data.get('status', None)  # По умолчанию фильтр по статусу отсутствует
+            category_filter = request.data.get('category', [])  # По умолчанию фильтр по категории пустой
+
+            # Начинаем с базового QuerySet
+            queryset = Manga.objects.all()
+
+            # Фильтрация по статусу (если статус передан)
+            if status_filter:
+                queryset = queryset.filter(Status=status_filter)
+
+            # Фильтрация по категориям
+            if category_filter:
+                queryset = queryset.filter(Category__name__in=category_filter).distinct()
+
+            if sort_by == 'popularity':
+                queryset = queryset.annotate(popularity=Count('bookmarked_users')).order_by('-popularity')
+            elif sort_by == 'rating':
+                queryset = queryset.order_by('-Rating')
+            elif sort_by == 'chapters':
+                queryset = queryset.order_by('-Chapters')
+            elif sort_by == 'release_date':
+                queryset = queryset.order_by('-Release')
+            elif sort_by == 'update_date':
+                queryset = queryset.order_by('-Created_at')
+            elif sort_by == 'add_date':
+                queryset = queryset.order_by('-id')
+            elif sort_by == 'title_az':
+                queryset = queryset.order_by('Title')
+            elif sort_by == 'title_za':
+                queryset = queryset.order_by('-Title')
+
+            serializer = MangaSerializer(queryset, many=True)
+            return Response(serializer.data)
+
+
+
+
+class StatusListView(APIView):
+    def get(self, request, *args, **kwargs):
+        statuses = [
+            {"name": "Завершен"},
+            {"name": "Анонс"},
+            {"name": "Приостановлен"},
+            {"name": "Выпуск прекращен"},
+            {"name": "Выходит"}
+        ]
+        return Response(statuses, status=status.HTTP_200_OK)
+
 
 class NewsDetailView(RetrieveAPIView):
     queryset = News.objects.all()

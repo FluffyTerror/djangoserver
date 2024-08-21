@@ -9,6 +9,7 @@ from django.utils.text import slugify
 
 
 
+
 class Category(models.Model):
     name = models.CharField(max_length=64, unique=True)
 
@@ -30,19 +31,26 @@ def user_profile_image_directory_path(instance, filename):
 
 
 class Manga(models.Model):
+    STATUS_CHOICES = [
+        ('Завершен','completed'),
+        ('Анонс','announced'),
+        ('Приостановлен','paused'),
+        ('Выпуск прекращен','discontinued'),
+        ('Выходит','ongoing'),
+    ]
+
     Title = models.CharField(max_length=128)
     Author = models.CharField(max_length=64)
     Description = models.TextField(blank=True)
     Release = models.DateField()
-    Status = models.CharField(default=None)
+    Status = models.CharField(max_length=64, choices=STATUS_CHOICES)  # Используем CharField с choices
     Chapters = models.IntegerField()
     Artist = models.CharField(max_length=64)
-    Image = models.ImageField(upload_to=manga_cover_directory_path, default='Manga/image_10.png')  # Сюда будет загружаться обложка
+    Image = models.ImageField(upload_to='manga/', default='Manga/image_10.png')  # Сюда будет загружаться обложка
     Rating = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(10)])
     RatingCount = models.IntegerField(default=0)
     Category = models.ManyToManyField(Category, related_name='manga')
     Created_at = models.DateTimeField(auto_now_add=True)
-
     def __str__(self):
         return self.Title
 
@@ -69,11 +77,6 @@ class MangaPage(models.Model):
 
     def __str__(self):
         return f"Volume {self.volume}, Chapter {self.chapter}, Page {self.page_number} ,Chapter_Title{self.Chapter_Title} "
-
-#
-
-
-
 
 
 class User(AbstractUser):
