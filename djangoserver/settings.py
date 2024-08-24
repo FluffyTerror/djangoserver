@@ -196,4 +196,4 @@ SIMPLE_JWT = {
 }
 
 
-AUTH_USER_MODEL= 'MangaLib.User'
+AUTH_USER_MODEL = 'MangaLib.User'

@@ -1,6 +1,5 @@
 import os
 
-from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -43,7 +42,7 @@ class Manga(models.Model):
     Author = models.CharField(max_length=64)
     Description = models.TextField(blank=True)
     Release = models.DateField()
-    Status = models.CharField(max_length=64, choices=STATUS_CHOICES)  # Используем CharField с choices
+    Status = models.CharField(max_length=64, choices=STATUS_CHOICES)
     Chapters = models.IntegerField()
     Artist = models.CharField(max_length=64)
     Image = models.ImageField(upload_to='manga/', default='Manga/image_10.png')  # Сюда будет загружаться обложка

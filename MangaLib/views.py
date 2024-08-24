@@ -2,9 +2,8 @@ from datetime import datetime, timedelta
 
 from django.contrib.auth import get_user_model
 from django.db.models import Q,Count
-from django.http import FileResponse, Http404, HttpResponse
+from django.http import Http404, HttpResponse
 from rest_framework import generics, status, views
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import get_object_or_404, ListAPIView, CreateAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -15,7 +14,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, Manga, Review, News, Category
 from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, MangaZipSerializer, NewsSerializer, \
     CategorySerializer
-from rest_framework import filters
 
 
 
@@ -38,8 +36,8 @@ class CatalogListView(APIView):
             if category_filter:
                 queryset = queryset.filter(Category__name__in=category_filter).distinct()
 
-            if sort_by == 'popularity':
-                queryset = queryset.annotate(popularity=Count('bookmarked_users')).order_by('-popularity')
+            if sort_by == 'popularity':#возможно пересмотреть логику популярности и ввести коэффициент основанный на сумме индивидульных признаков и приведенных к общим пределам 0 до 1
+                queryset = queryset.annotate(popularity=Count('bookmarked_users')).order_by('-popularity')#cменить на количество отзывов
             elif sort_by == 'rating':
                 queryset = queryset.order_by('-Rating')
             elif sort_by == 'chapters':

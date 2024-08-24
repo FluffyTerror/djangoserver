@@ -1,6 +1,5 @@
 from django.contrib import admin
-from django.urls import path, include, re_path
-from rest_framework import routers
+from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_simplejwt.views import (
@@ -16,7 +15,7 @@ urlpatterns = [
 
     path('profile/', ProfileView.as_view(), name='profile view'),
     path('user/update/', UserUpdateView.as_view(), name='user-update'),
-    path('user/', UsernameView.as_view(), name = 'user_view'),
+    path('user/', UsernameView.as_view(), name='user_view'),
     path('user_img/<str:username>/', Userimg.as_view(), name='user_image'),
     path('user/bookmarks/', UserBookmarksView.as_view(), name='user-bookmarks'),
 
@@ -41,9 +40,9 @@ urlpatterns = [
 
 
     path('popular_manga/', AllPopularMangaView.as_view(), name='popular page'),
-    path('popular/',PopularMangaView.as_view(),name='popular on main page'),
-    path('new/',NewReleasesView.as_view(),name='new on main page'),
-    path('catalog/',CatalogListView.as_view(),name='catalog page'),
+    path('popular/', PopularMangaView.as_view(), name='popular on main page'),
+    path('new/', NewReleasesView.as_view(), name='new on main page'),
+    path('catalog/', CatalogListView.as_view(), name='catalog page'),
 
 
     path('tags/', CategoryListView.as_view(), name='tags-list'),
@@ -56,7 +55,7 @@ urlpatterns = [
     path('login/', CustomUserLogin.as_view(), name='user-login'),
 
 
-    path('search/title/',MangaTitleSearchView.as_view(), name='title search'),
+    path('search/title/', MangaTitleSearchView.as_view(), name='title search'),
     path('search/author/', MangaAuthorSearchView.as_view(), name='author search'),
     path('search/publisher/', MangaArtistSearchView.as_view(), name='publisher search'),
 

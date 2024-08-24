@@ -1,14 +1,8 @@
 import os
 import zipfile
 
-from django.contrib.auth import authenticate
-from django.contrib.auth.hashers import make_password, check_password, is_password_usable
-from django.core.files.base import ContentFile
-from django.utils.text import slugify
+from django.contrib.auth.hashers import make_password, is_password_usable
 from rest_framework import serializers
-from rest_framework.response import Response
-
-
 from MangaLib.models import Manga, User, Review, Category, MangaPage, News
 
 
