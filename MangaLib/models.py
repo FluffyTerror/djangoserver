@@ -31,10 +31,10 @@ def user_profile_image_directory_path(instance, filename):
 
 class Manga(models.Model):
     STATUS_CHOICES = [
-        ('Завершен','completed'),
+        ('Завершён','completed'),
         ('Анонс','announced'),
         ('Приостановлен','paused'),
-        ('Выпуск прекращен','discontinued'),
+        ('Выпуск прекращён','discontinued'),
         ('Выходит','ongoing'),
     ]
 
@@ -126,3 +126,24 @@ class Review(models.Model):
 
     class Meta:
         unique_together = ('user', 'manga')  # Один пользователь может оставить только один отзыв на одну мангу
+
+
+
+
+class Person(models.Model):
+    Types = [
+        ('Автор', 'author'),
+        ('Издатель', 'publisher'),
+        ('Художник', 'artist'),
+    ]
+
+    Countries = [
+        ('Япония','Japan'),
+        ('Корея', 'Korea'),
+        ('Китай', 'China')
+    ]
+    profile_image = models.ImageField(upload_to=user_profile_image_directory_path, default='Users/User profile picture.png')
+    Nickname = models.CharField(max_length=128)
+    Country = models.CharField(max_length=32, choices= Countries)
+    Type = models.CharField(max_length=32,choices=Types)
+    About = models.TextField(max_length=500)

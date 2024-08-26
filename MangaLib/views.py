@@ -16,48 +16,83 @@ from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, Mang
     CategorySerializer
 
 
+class UsernameBookmarksView(APIView):
+    def post(self, request, username):
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Получаем закладки пользователя
+        bookmarks = user.bookmarks.all()
+
+        # Извлекаем параметры для сортировки
+        sort_by = request.data.get('sort_by', 'popularity')  # По умолчанию сортировка по популярности
+        status_filter = request.data.get('status', [])  # По умолчанию фильтр по статусу пустой список
+
+
+        if status_filter:
+            bookmarks = bookmarks.filter(Status__in=status_filter)
+        # Применяем сортировку
+        if sort_by == 'chapters':
+            bookmarks = bookmarks.order_by('-Chapters')
+        elif sort_by == 'release_date':
+            bookmarks = bookmarks.order_by('-Release')
+        elif sort_by == 'update_date':
+            bookmarks = bookmarks.order_by('-Created_at')
+        elif sort_by == 'add_date':
+            bookmarks = bookmarks.order_by('-id')
+        elif sort_by == 'title_az':
+            bookmarks = bookmarks.order_by('Title')
+        elif sort_by == 'title_za':
+            bookmarks = bookmarks.order_by('-Title')
+
+        # Сериализуем данные
+        serializer = MangaSerializer(bookmarks, many=True)
+        return Response(serializer.data)
+
+
+
+
+
 
 class CatalogListView(APIView):
+    def post(self, request):
+        sort_by = request.data.get('sort_by', 'popularity')  # По умолчанию сортировка по популярности
+        status_filter = request.data.get('status', [])  # По умолчанию фильтр по статусу пустой список
+        category_filter = request.data.get('category', [])  # По умолчанию фильтр по категории пустой список
 
-        def post(self, request):
+        # Начинаем с базового QuerySet
+        queryset = Manga.objects.all()
 
-            sort_by = request.data.get('sort_by', 'popularity')  # По умолчанию сортировка по популярности
-            status_filter = request.data.get('status', None)  # По умолчанию фильтр по статусу отсутствует
-            category_filter = request.data.get('category', [])  # По умолчанию фильтр по категории пустой
+        # Фильтрация по статусу (если статусы переданы)
+        if status_filter:
+            queryset = queryset.filter(Status__in=status_filter)
 
-            # Начинаем с базового QuerySet
-            queryset = Manga.objects.all()
+        # Фильтрация по категориям
+        if category_filter:
+            queryset = queryset.filter(Category__name__in=category_filter).distinct()
 
-            # Фильтрация по статусу (если статус передан)
-            if status_filter:
-                queryset = queryset.filter(Status=status_filter)
+        # Сортировка
+        if sort_by == 'popularity':
+            queryset = queryset.annotate(popularity=Count('bookmarked_users')).order_by('-popularity')
+        elif sort_by == 'rating':
+            queryset = queryset.order_by('-Rating')
+        elif sort_by == 'chapters':
+            queryset = queryset.order_by('-Chapters')
+        elif sort_by == 'release_date':
+            queryset = queryset.order_by('-Release')
+        elif sort_by == 'update_date':
+            queryset = queryset.order_by('-Created_at')
+        elif sort_by == 'add_date':
+            queryset = queryset.order_by('-id')
+        elif sort_by == 'title_az':
+            queryset = queryset.order_by('Title')
+        elif sort_by == 'title_za':
+            queryset = queryset.order_by('-Title')
 
-            # Фильтрация по категориям
-            if category_filter:
-                queryset = queryset.filter(Category__name__in=category_filter).distinct()
-
-            if sort_by == 'popularity':#возможно пересмотреть логику популярности и ввести коэффициент основанный на сумме индивидульных признаков и приведенных к общим пределам 0 до 1
-                queryset = queryset.annotate(popularity=Count('bookmarked_users')).order_by('-popularity')#cменить на количество отзывов
-            elif sort_by == 'rating':
-                queryset = queryset.order_by('-Rating')
-            elif sort_by == 'chapters':
-                queryset = queryset.order_by('-Chapters')
-            elif sort_by == 'release_date':
-                queryset = queryset.order_by('-Release')
-            elif sort_by == 'update_date':
-                queryset = queryset.order_by('-Created_at')
-            elif sort_by == 'add_date':
-                queryset = queryset.order_by('-id')
-            elif sort_by == 'title_az':
-                queryset = queryset.order_by('Title')
-            elif sort_by == 'title_za':
-                queryset = queryset.order_by('-Title')
-
-            serializer = MangaSerializer(queryset, many=True)
-            return Response(serializer.data)
-
-
-
+        serializer = MangaSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 class StatusListView(APIView):
     def get(self, request, *args, **kwargs):
@@ -504,17 +539,6 @@ class NewReleasesView(ListAPIView):
     def get_queryset(self):
         # Возвращаем манги, отсортированные по дате создания (сначала новые)
         return Manga.objects.order_by('-Created_at')[:6]  # Топ-6 новинок
-
-
-
-class UserBookmarksView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        bookmarks = user.bookmarks.all()  # Получаем все манги из закладок пользователя
-        serializer = MangaSerializer(bookmarks, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 

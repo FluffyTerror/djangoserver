@@ -17,7 +17,7 @@ urlpatterns = [
     path('user/update/', UserUpdateView.as_view(), name='user-update'),
     path('user/', UsernameView.as_view(), name='user_view'),
     path('user_img/<str:username>/', Userimg.as_view(), name='user_image'),
-    path('user/bookmarks/', UserBookmarksView.as_view(), name='user-bookmarks'),
+    path('user/<str:username>/bookmarks/', UsernameBookmarksView.as_view(), name='username-bookmarks'),
 
 
     path('news/', NewsListView.as_view(), name='news-list'),
