@@ -25,6 +25,8 @@ USERS_MEDIA_ROOT = os.path.join(MEDIA_ROOT, 'Users')
 # Path for storing manga files in the 'Manga' directory
 MANGA_MEDIA_ROOT = os.path.join(MEDIA_ROOT, 'Manga')
 
+# Path for storing Persons files in the 'Persons' directory
+PERSON_MEDIA_ROOT = os.path.join(MEDIA_ROOT, 'Persons')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/

@@ -1,5 +1,6 @@
+import os
 from datetime import datetime, timedelta
-
+from django.utils.text import slugify
 from django.contrib.auth import get_user_model
 from django.db.models import Q,Count
 from django.http import Http404, HttpResponse
@@ -256,13 +257,19 @@ class UserUpdateView(APIView):
 
 
 
-class MangaCreateView(APIView):  # POST создать мангу
+class MangaCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         serializer = MangaSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            manga = serializer.save()
+
+            # Создаем директорию для манги и обложки
+            manga_dir = os.path.join('media/Manga', manga.Title)
+            cover_dir = os.path.join(manga_dir, 'cover')
+            os.makedirs(cover_dir, exist_ok=True)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -274,10 +281,20 @@ class MangaDetailView(generics.RetrieveAPIView): # GET конкретный та
     serializer_class = MangaSerializer
 
 
-class MangaUpdateView(generics.UpdateAPIView):  # PUT change attr in manga
+class MangaUpdateView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
     queryset = Manga.objects.all()
     serializer_class = MangaSerializer
+
+    # Позволяем частичное обновление, чтобы не требовалось передавать все поля
+    def partial_update(self, request, *args, **kwargs):
+        manga = self.get_object()
+        serializer = self.get_serializer(manga, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AddBookmarkView(APIView):

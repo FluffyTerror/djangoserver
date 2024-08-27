@@ -1,10 +1,11 @@
 import os
+import shutil
 import zipfile
 
 from django.contrib.auth.hashers import make_password, is_password_usable
 from rest_framework import serializers
 from MangaLib.models import Manga, User, Review, Category, MangaPage, News
-
+from django.utils.text import slugify
 
 class ReviewSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
@@ -17,9 +18,8 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'user_profile_image', 'text', 'rating', 'created_at', 'manga_id', 'manga_title']
 
     def get_user_profile_image(self, obj):
-        # Приведение пути к относительному формату для профиля пользователя
         if obj.user.profile_image:
-            return obj.user.profile_image.url  # Возвращаем относительный путь
+            return obj.user.profile_image.url
         return None
 
 
@@ -119,11 +119,12 @@ class MangaZipSerializer(serializers.Serializer):
 class MangaSerializer(serializers.ModelSerializer):
     categories = serializers.ListField(
         child=serializers.CharField(max_length=64),
-        write_only=True
+        write_only=True,
+        required=False  # Делаем поле необязательным для частичного обновления
     )
     categories_display = serializers.SerializerMethodField()
-    Status = serializers.ChoiceField(choices=Manga.STATUS_CHOICES)  # Используем ChoiceField для статуса
-    Image = serializers.SerializerMethodField()  # Приводим Image к относительному пути
+    Status = serializers.ChoiceField(choices=Manga.STATUS_CHOICES)
+    Image = serializers.ImageField(required=False)  # Обрабатываем поле Image как файл
 
     class Meta:
         model = Manga
@@ -139,7 +140,7 @@ class MangaSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # Извлекаем категории из валидированных данных
-        categories_data = validated_data.pop('categories')
+        categories_data = validated_data.pop('categories', [])
 
         # Создаём объект манги
         manga = Manga.objects.create(**validated_data)
@@ -149,23 +150,51 @@ class MangaSerializer(serializers.ModelSerializer):
             category, created = Category.objects.get_or_create(name=category_name)
             manga.Category.add(category)
 
+        # Создаем директорию для манги и обложки
+        manga_dir = os.path.join('media/Manga', manga.Title)
+        cover_dir = os.path.join(manga_dir, 'cover')
+        os.makedirs(cover_dir, exist_ok=True)
+
         return manga
 
     def update(self, instance, validated_data):
-        # Извлекаем категории, если они предоставлены
-        categories_data = validated_data.pop('categories', None)
+        # Сохраняем старое название для проверки
+        old_title = instance.Title
+        new_title = validated_data.get('Title', old_title)
 
-        # Обновляем основные поля
-        instance.Title = validated_data.get('Title', instance.Title)
-        instance.Author = validated_data.get('Author', instance.Author)
-        instance.Description = validated_data.get('Description', instance.Description)
-        instance.Release = validated_data.get('Release', instance.Release)
-        instance.Status = validated_data.get('Status', instance.Status)
-        instance.Chapters = validated_data.get('Chapters', instance.Chapters)
-        instance.Artist = validated_data.get('Artist', instance.Artist)
-        instance.Image = validated_data.get('Image', instance.Image)
+        # Обновляем только те поля, которые были переданы в запросе
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        # Если название манги изменилось, меняем директорию
+        if old_title != new_title:
+            # Пути для старой и новой директории
+            old_dir = os.path.join('media/Manga', old_title)
+            new_dir = os.path.join('media/Manga', new_title)
+
+            # Перемещаем папку с контентом манги
+            if os.path.exists(old_dir):
+                shutil.move(old_dir, new_dir)
+
+                # Обновляем путь к обложке, если обложка существует
+                if instance.Image and instance.Image.name:
+                    old_image_path = instance.Image.name
+                    new_image_path = old_image_path.replace(old_title, new_title)
+
+                    # Перемещаем файл обложки в новую директорию
+                    old_image_full_path = os.path.join('media', old_image_path)
+                    new_image_full_path = os.path.join('media', new_image_path)
+
+                    if os.path.exists(old_image_full_path):
+                        # Создаем новую директорию для обложки, если она еще не существует
+                        os.makedirs(os.path.dirname(new_image_full_path), exist_ok=True)
+                        shutil.move(old_image_full_path, new_image_full_path)
+
+                    # Обновляем путь к изображению в базе данных
+                    instance.Image.name = new_image_path
 
         # Если категории были переданы, обновляем их
+        categories_data = validated_data.pop('categories', None)
         if categories_data is not None:
             instance.Category.clear()
             for category_name in categories_data:
