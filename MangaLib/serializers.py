@@ -143,6 +143,7 @@ class MangaSerializer(serializers.ModelSerializer):
         categories_data = validated_data.pop('categories', [])
 
         # Создаём объект манги
+        # Создаем объект манги
         manga = Manga.objects.create(**validated_data)
 
         # Добавляем категории к манге
@@ -155,7 +156,20 @@ class MangaSerializer(serializers.ModelSerializer):
         cover_dir = os.path.join(manga_dir, 'cover')
         os.makedirs(cover_dir, exist_ok=True)
 
+        # Перемещаем изображение в директорию cover, если оно передано
+        if manga.Image:
+            old_image_path = manga.Image.path
+            new_image_path = os.path.join(cover_dir, 'cover.jpg')
+
+            # Перемещаем изображение
+            shutil.move(old_image_path, new_image_path)
+
+            # Обновляем путь к изображению в базе данных
+            manga.Image.name = os.path.join(manga.Title, 'cover', 'cover.jpg')
+            manga.save()
+
         return manga
+
 
     def update(self, instance, validated_data):
         # Сохраняем старое название для проверки
