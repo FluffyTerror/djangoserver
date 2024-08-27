@@ -1,11 +1,11 @@
 import os
 import shutil
 import zipfile
-
+from django.core.files.storage import default_storage
 from django.contrib.auth.hashers import make_password, is_password_usable
 from rest_framework import serializers
 from MangaLib.models import Manga, User, Review, Category, MangaPage, News
-from django.utils.text import slugify
+
 
 class ReviewSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
@@ -170,7 +170,6 @@ class MangaSerializer(serializers.ModelSerializer):
 
         return manga
 
-
     def update(self, instance, validated_data):
         # Сохраняем старое название для проверки
         old_title = instance.Title
@@ -206,6 +205,30 @@ class MangaSerializer(serializers.ModelSerializer):
 
                     # Обновляем путь к изображению в базе данных
                     instance.Image.name = new_image_path
+
+        # Если новое изображение передано, обрабатываем его
+        if 'Image' in validated_data:
+            new_image = validated_data['Image']
+            old_image_path = instance.Image.path if instance.Image else None
+
+            # Если старое изображение существует, удаляем его
+            if old_image_path and os.path.isfile(old_image_path):
+                os.remove(old_image_path)
+
+            # Сохраняем новое изображение в директории cover
+            manga_dir = os.path.join('media/Manga', instance.Title)
+            cover_dir = os.path.join(manga_dir, 'cover')
+            os.makedirs(cover_dir, exist_ok=True)
+
+            new_image_path = os.path.join(cover_dir, 'cover.jpg')
+
+            # Сохраняем новое изображение
+            with open(new_image_path, 'wb+') as destination:
+                for chunk in new_image.chunks():
+                    destination.write(chunk)
+
+            # Обновляем путь к изображению в базе данных
+            instance.Image.name = os.path.join(instance.Title, 'cover', 'cover.jpg')
 
         # Если категории были переданы, обновляем их
         categories_data = validated_data.pop('categories', None)
