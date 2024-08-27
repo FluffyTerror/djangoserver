@@ -53,10 +53,6 @@ class UsernameBookmarksView(APIView):
         return Response(serializer.data)
 
 
-
-
-
-
 class CatalogListView(APIView):
     def post(self, request):
         sort_by = request.data.get('sort_by', 'popularity')  # По умолчанию сортировка по популярности
@@ -107,10 +103,24 @@ class StatusListView(APIView):
         return Response(statuses, status=status.HTTP_200_OK)
 
 
-class NewsDetailView(RetrieveAPIView):
-    queryset = News.objects.all()
-    serializer_class = NewsSerializer
-    lookup_field = 'id'
+class NewsDetailView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request, *args, **kwargs):
+        # Получаем ID из параметров URL
+        news_id = kwargs.get('id')
+
+        # Пытаемся получить объект новости по ID
+        try:
+            news = News.objects.get(id=news_id)
+        except News.DoesNotExist:
+            return Response({'detail': 'News not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Сериализуем данные
+        serializer = NewsSerializer(news)
+
+        # Возвращаем сериализованные данные
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class NewsCreateView(CreateAPIView):
@@ -120,9 +130,19 @@ class NewsCreateView(CreateAPIView):
     def perform_create(self, serializer):
         serializer.save(User=self.request.user)
 
-class NewsListView(ListAPIView):
-    queryset = News.objects.all()
-    serializer_class = NewsSerializer
+
+class NewsListView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request, *args, **kwargs):
+        # Получаем все объекты новостей
+        queryset = News.objects.all()
+
+        # Сериализуем данные
+        serializer = NewsSerializer(queryset, many=True)
+
+        # Возвращаем сериализованные данные
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class MangaUploadView(views.APIView):
     def post(self, request, manga_id):
@@ -180,11 +200,18 @@ class MangaIdView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class MangaListView(generics.ListAPIView):  # GET все тайтлы
+class MangaListView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
-    queryset = Manga.objects.all()
-    serializer_class = MangaSerializer
 
+    def get(self, request, *args, **kwargs):
+        # Получаем все объекты манги
+        queryset = Manga.objects.all()
+
+        # Сериализуем данные
+        serializer = MangaSerializer(queryset, many=True)
+
+        # Возвращаем сериализованные данные
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class Userimg(APIView):
     # Разрешаем доступ всем пользователям
@@ -281,21 +308,26 @@ class MangaDetailView(generics.RetrieveAPIView): # GET конкретный та
     serializer_class = MangaSerializer
 
 
-class MangaUpdateView(generics.UpdateAPIView):
+class MangaUpdateView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
-    queryset = Manga.objects.all()
-    serializer_class = MangaSerializer
 
-    # Позволяем частичное обновление, чтобы не требовалось передавать все поля
-    def partial_update(self, request, *args, **kwargs):
-        manga = self.get_object()
-        serializer = self.get_serializer(manga, data=request.data, partial=True)
+    def get_object(self, pk):
+        try:
+            return Manga.objects.get(pk=pk)
+        except Manga.DoesNotExist:
+            return None
+
+    def patch(self, request, pk, *args, **kwargs):
+        manga = self.get_object(pk)
+        if not manga:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = MangaSerializer(manga, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class AddBookmarkView(APIView):
     permission_classes = [IsAuthenticated]
@@ -399,9 +431,6 @@ class CustomUserCreate(APIView): # POST создать юзера
 
 
 
-
-
-
 class CustomUserLogin(APIView):# POST залогинить юзера
     permission_classes = [AllowAny]
 
@@ -498,13 +527,82 @@ class MangaArtistSearchView(APIView):
 
 
 
-class PopularMangaView(ListAPIView):
+class PopularMangaView(APIView):
     serializer_class = MangaSerializer
     permission_classes = [AllowAny]
 
-    def get_queryset(self):
-        # Сортируем манги по количеству отзывов и рейтингу
-        return Manga.objects.order_by('-RatingCount', '-Rating')[:6]  # Топ-6 манг
+    def get(self, request):
+        # Получаем параметры из запроса
+        tags = request.query_params.getlist('tags', [])  # список тегов
+        time_filter = request.query_params.get('time_filter')  # фильтр по времени
+
+        # Получаем начальный queryset для манги
+        queryset = Manga.objects.all()
+
+        # Фильтрация по тегам
+        if tags:
+            queryset = queryset.filter(Category__name__in=tags).distinct()
+
+        # Фильтрация по времени
+        if time_filter == 'day':
+            queryset = queryset.filter(Created_at__gte=datetime.now() - timedelta(days=1))
+        elif time_filter == 'week':
+            queryset = queryset.filter(Created_at__gte=datetime.now() - timedelta(weeks=1))
+        elif time_filter == 'month':
+            queryset = queryset.filter(Created_at__gte=datetime.now() - timedelta(days=30))
+        elif time_filter == 'year':
+            queryset = queryset.filter(Created_at__gte=datetime.now() - timedelta(days=365))
+
+        # Сортировка по количеству отзывов и рейтингу
+        queryset = queryset.order_by('-RatingCount', '-Rating')[:6]
+
+        # Сериализация данных
+        manga_serializer = self.serializer_class(queryset, many=True)
+
+        # Возвращаем результат
+        return Response({
+            'manga': manga_serializer.data,
+        }, status=status.HTTP_200_OK)
+
+
+
+class NewReleasesView(APIView):
+    serializer_class = MangaSerializer
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        # Получаем параметры из запроса
+        tags = request.query_params.getlist('tags', [])  # список тегов
+        time_filter = request.query_params.get('time_filter')  # фильтр по времени
+
+        # Получаем начальный queryset для манги
+        queryset = Manga.objects.all()
+
+        # Фильтрация по тегам
+        if tags:
+            queryset = queryset.filter(Category__name__in=tags).distinct()
+
+        # Фильтрация по времени
+        if time_filter == 'day':
+            queryset = queryset.filter(Created_at__gte=datetime.now() - timedelta(days=1))
+        elif time_filter == 'week':
+            queryset = queryset.filter(Created_at__gte=datetime.now() - timedelta(weeks=1))
+        elif time_filter == 'month':
+            queryset = queryset.filter(Created_at__gte=datetime.now() - timedelta(days=30))
+        elif time_filter == 'year':
+            queryset = queryset.filter(Created_at__gte=datetime.now() - timedelta(days=365))
+
+        # Сортировка по дате создания
+        queryset = queryset.order_by('-Created_at')[:6]
+
+        # Сериализация данных
+        manga_serializer = self.serializer_class(queryset, many=True)
+
+        # Возвращаем результат
+        return Response({
+            'manga': manga_serializer.data,
+        }, status=status.HTTP_200_OK)
+
 
 
 class AllPopularMangaView(APIView):
@@ -545,17 +643,6 @@ class AllPopularMangaView(APIView):
         return Response({
             'manga': manga_serializer.data,
         }, status=status.HTTP_200_OK)
-
-
-
-
-class NewReleasesView(ListAPIView):
-    serializer_class = MangaSerializer
-    permission_classes = [AllowAny]
-
-    def get_queryset(self):
-        # Возвращаем манги, отсортированные по дате создания (сначала новые)
-        return Manga.objects.order_by('-Created_at')[:6]  # Топ-6 новинок
 
 
 

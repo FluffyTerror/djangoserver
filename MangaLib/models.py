@@ -31,11 +31,11 @@ def user_profile_image_directory_path(instance, filename):
 
 class Manga(models.Model):
     STATUS_CHOICES = [
-        ('Завершён','completed'),
-        ('Анонс','announced'),
-        ('Приостановлен','paused'),
-        ('Выпуск прекращён','discontinued'),
-        ('Выходит','ongoing'),
+        ('Завершён', 'completed'),
+        ('Анонс', 'announced'),
+        ('Приостановлен', 'paused'),
+        ('Выпуск прекращён', 'discontinued'),
+        ('Выходит', 'ongoing'),
     ]
 
     Title = models.CharField(max_length=128)
@@ -45,11 +45,12 @@ class Manga(models.Model):
     Status = models.CharField(max_length=64, choices=STATUS_CHOICES)
     Chapters = models.IntegerField()
     Artist = models.CharField(max_length=64)
-    Image = models.ImageField(upload_to='manga/', default='Manga/image_10.png')  # Сюда будет загружаться обложка
+    Image = models.ImageField(upload_to='Manga/', default='Manga/image_10.png')
     Rating = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(10)])
     RatingCount = models.IntegerField(default=0)
     Category = models.ManyToManyField(Category, related_name='manga')
     Created_at = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
         return self.Title
 
@@ -58,7 +59,7 @@ class Manga(models.Model):
         super().save(*args, **kwargs)
 
         # Создаем директорию для страниц манги, если её нет
-        manga_dir = os.path.join('media/manga', slugify(self.Title))
+        manga_dir = os.path.join('media/Manga', slugify(self.Title))
         os.makedirs(manga_dir, exist_ok=True)
 
 
