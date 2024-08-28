@@ -44,11 +44,13 @@ class Manga(models.Model):
 
     Title = models.CharField(max_length=128)
     Author = models.CharField(max_length=64)
+    Publisher = models.CharField(max_length=64, default='PaulichP')
+    Artist = models.CharField(max_length=64)
     Description = models.TextField(blank=True)
     Release = models.DateField()
     Status = models.CharField(max_length=64, choices=STATUS_CHOICES)
     Chapters = models.IntegerField()
-    Artist = models.CharField(max_length=64)
+
     Image = models.ImageField(upload_to='Manga/', default='Manga/image_10.png')
     Rating = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(10)])
     RatingCount = models.IntegerField(default=0)

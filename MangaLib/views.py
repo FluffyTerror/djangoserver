@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import User, Manga, Review, News, Category
+from .models import User, Manga, Review, News, Category, Person
 from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, MangaZipSerializer, NewsSerializer, \
     CategorySerializer, PersonSerializer
 
@@ -302,10 +302,13 @@ class MangaCreateView(APIView):
 
 
 
-class MangaDetailView(generics.RetrieveAPIView): # GET конкретный тайтл
+class MangaDetailView(APIView): # GET конкретный тайтл
     permission_classes = [IsAuthenticatedOrReadOnly]
-    queryset = Manga.objects.all()
-    serializer_class = MangaSerializer
+
+    def get(self, request, pk, format=None):
+        manga = get_object_or_404(Manga, pk=pk)
+        serializer = MangaSerializer(manga)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class MangaUpdateView(APIView):
@@ -511,13 +514,13 @@ class MangaAuthorSearchView(APIView):
             return Response({"error": "No query parameter provided"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class MangaArtistSearchView(APIView):
+class MangaPublisherSearchView(APIView):
     def post(self, request, *args, **kwargs):
         query = request.data.get('query', None)
 
         if query:
             mangas = Manga.objects.filter(
-                Q(Artist__icontains=query)
+                Q(Publisher__icontains=query)
             ).distinct()
 
             serializer = MangaSerializer(mangas, many=True)
@@ -649,6 +652,8 @@ class AllPopularMangaView(APIView):
 class CategoryListView(ListAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    def get_queryset(self):
+        return Category.objects.all().order_by('name')
 
 
 class PersonCreateView(APIView):
@@ -662,3 +667,25 @@ class PersonCreateView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AuthorListView(APIView):
+    def get(self, request, format=None):
+        authors = Person.objects.filter(Type='Автор')
+        serializer = PersonSerializer(authors, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class PublisherListView(APIView):
+    def get(self, request, format=None):
+        authors = Person.objects.filter(Type='Издатель')
+        serializer = PersonSerializer(authors, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ArtistListView(APIView):
+    def get(self, request, format=None):
+        authors = Person.objects.filter(Type='Художник')
+        serializer = PersonSerializer(authors, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+

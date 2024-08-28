@@ -49,6 +49,10 @@ urlpatterns = [
     path('statuses/', StatusListView.as_view(), name='status-list'),
 
     path('add_person/', PersonCreateView.as_view(), name="add person"),
+    path('authors/', AuthorListView.as_view(), name="authors list"),
+    path('publishers/', PublisherListView.as_view(), name="publishers list"),
+    path('artists/', ArtistListView.as_view(), name="artists list"),
+
 
     path('register/', CustomUserCreate.as_view(), name="create_user"),
     path('logout/', LogoutAPIView.as_view(), name='logout'),
@@ -57,7 +61,7 @@ urlpatterns = [
 
     path('search/title/', MangaTitleSearchView.as_view(), name='title search'),
     path('search/author/', MangaAuthorSearchView.as_view(), name='author search'),
-    path('search/publisher/', MangaArtistSearchView.as_view(), name='publisher search'),
+    path('search/publisher/', MangaPublisherSearchView.as_view(), name='publisher search'),
 
 
     path('get_token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
