@@ -27,6 +27,10 @@ def user_profile_image_directory_path(instance, filename):
     # Файлы пользователей будут храниться в папке 'media/Users/{user_id}/{filename}'
     return f'Users/{instance.id}/{filename}'
 
+def person_image_directory_path(instance, filename):
+    # Файлы будут храниться в папке 'media/Persons/{person_nickname}/{filename}'
+    return f'Persons/{instance.Nickname}/{filename}'
+
 
 
 class Manga(models.Model):
@@ -138,13 +142,12 @@ class Person(models.Model):
         ('Художник', 'artist'),
     ]
 
-    Countries = [
-        ('Япония','Japan'),
-        ('Корея', 'Korea'),
-        ('Китай', 'China')
-    ]
-    profile_image = models.ImageField(upload_to=user_profile_image_directory_path, default='Users/User profile picture.png')
+    profile_image = models.ImageField(upload_to=person_image_directory_path, default='Persons/image.png')
     Nickname = models.CharField(max_length=128)
-    Country = models.CharField(max_length=32, choices= Countries)
-    Type = models.CharField(max_length=32,choices=Types)
+    Country = models.CharField(max_length=32)
+    Type = models.CharField(max_length=32, choices=Types)
     About = models.TextField(max_length=500)
+
+    def __str__(self):
+        return self.Nickname
+

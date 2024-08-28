@@ -48,7 +48,7 @@ urlpatterns = [
     path('tags/', CategoryListView.as_view(), name='tags-list'),
     path('statuses/', StatusListView.as_view(), name='status-list'),
 
-
+    path('add_person/', PersonCreateView.as_view(), name="add person"),
 
     path('register/', CustomUserCreate.as_view(), name="create_user"),
     path('logout/', LogoutAPIView.as_view(), name='logout'),

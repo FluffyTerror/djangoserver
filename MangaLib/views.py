@@ -14,7 +14,7 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, Manga, Review, News, Category
 from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, MangaZipSerializer, NewsSerializer, \
-    CategorySerializer
+    CategorySerializer, PersonSerializer
 
 
 class UsernameBookmarksView(APIView):
@@ -649,3 +649,16 @@ class AllPopularMangaView(APIView):
 class CategoryListView(ListAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+
+
+class PersonCreateView(APIView):
+    def post(self, request):
+        serializer = PersonSerializer(data=request.data)
+
+        if serializer.is_valid():
+            Person = serializer.save()
+            person_dir = os.path.join('media/Persons', Person.Nickname)
+            os.makedirs(person_dir, exist_ok=True)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

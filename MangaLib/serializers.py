@@ -4,7 +4,7 @@ import zipfile
 from django.core.files.storage import default_storage
 from django.contrib.auth.hashers import make_password, is_password_usable
 from rest_framework import serializers
-from MangaLib.models import Manga, User, Review, Category, MangaPage, News
+from MangaLib.models import Manga, User, Review, Category, MangaPage, News, Person
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -233,7 +233,6 @@ class MangaSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     bookmarks = MangaSerializer(many=True, read_only=True)
     reviews = ReviewSerializer(many=True, read_only=True)
-   # profile_image = serializers.SerializerMethodField()  # Приводим profile_image к относительному пути
 
     class Meta:
         model = User
@@ -284,3 +283,10 @@ class NewsSerializer(serializers.ModelSerializer):
     class Meta:
         model = News
         fields = ['User','id', 'Title', 'Content', 'Created_at']
+
+
+
+class PersonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Person
+        fields = ['id', 'Nickname', 'Country', 'Type', 'About', 'profile_image']
