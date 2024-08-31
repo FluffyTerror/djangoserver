@@ -291,6 +291,9 @@ class NewsSerializer(serializers.ModelSerializer):
 
 
 class PersonSerializer(serializers.ModelSerializer):
+    Mod_status = serializers.ChoiceField(choices=Person.MOD_CHOICES, read_only=True)
+    Mod_date = serializers.DateTimeField(read_only=True)
     class Meta:
         model = Person
-        fields = ['id', 'Nickname', 'Country', 'Type', 'About', 'profile_image']
+        fields = ['id', 'Nickname', 'Country', 'Type', 'About', 'profile_image',"Mod_status", "Mod_date"]
+        read_only_fields = ("Mod_status", "Mod_date")

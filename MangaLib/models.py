@@ -153,12 +153,19 @@ class Person(models.Model):
         ('Издатель', 'publisher'),
         ('Художник', 'artist'),
     ]
-
+    MOD_CHOICES = [
+        ('pending', 'На модерации'),
+        ('approved', 'Одобрено'),
+        ('rejected', 'Отклонено'),
+    ]
     profile_image = models.ImageField(upload_to=person_image_directory_path, default='Persons/image.png')
     Nickname = models.CharField(max_length=128)
     Country = models.CharField(max_length=32)
     Type = models.CharField(max_length=32, choices=Types)
     About = models.TextField(max_length=500)
+    moderation_status = models.CharField(max_length=10, choices=MOD_CHOICES, default='pending')
+    moderation_date = models.DateTimeField(null=True, blank=True)  # Новое поле для хранения даты успешной модерации
+
 
     def __str__(self):
         return self.Nickname

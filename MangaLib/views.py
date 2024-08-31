@@ -354,6 +354,7 @@ class MangaUpdateView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class AddBookmarkView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -679,6 +680,7 @@ class CategoryListView(ListAPIView):
 
 
 class PersonCreateView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         serializer = PersonSerializer(data=request.data)
 
@@ -691,22 +693,47 @@ class PersonCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ApprovePersonView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]  # Добавляем наше новое разрешение
+
+    def post(self, request,person_id):
+        try:
+            person = Person.objects.get(pk=person_id)
+            action = request.data.get('action')
+
+            if action == 'approve':
+                person.moderation_status = 'approved'
+                person.moderation_date = timezone.now()  # Устанавливаем дату успешной модерации
+                person.save()
+                return Response({"status": "Person approved"}, status=status.HTTP_200_OK)
+            elif action == 'reject':
+                person.moderation_status = 'rejected'
+                person.moderation_date = None  # Сбрасываем дату, если модерация не успешна
+                person.save()
+                return Response({"status": "Person rejected"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Person.DoesNotExist:
+            return Response({"error": "Person not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
 class AuthorListView(APIView):
     def get(self, request, format=None):
-        authors = Person.objects.filter(Type='Автор')
+        authors = Person.objects.filter(Type='Автор',moderation_status='approved')
         serializer = PersonSerializer(authors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class PublisherListView(APIView):
     def get(self, request, format=None):
-        authors = Person.objects.filter(Type='Издатель')
+        authors = Person.objects.filter(Type='Издатель', moderation_status='approved')
         serializer = PersonSerializer(authors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ArtistListView(APIView):
     def get(self, request, format=None):
-        authors = Person.objects.filter(Type='Художник')
+        authors = Person.objects.filter(Type='Художник',moderation_status='approved')
         serializer = PersonSerializer(authors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
