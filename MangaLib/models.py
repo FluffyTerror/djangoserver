@@ -7,8 +7,6 @@ from django.db import models
 from django.utils.text import slugify
 
 
-
-
 class Category(models.Model):
     name = models.CharField(max_length=64, unique=True)
 
@@ -56,11 +54,12 @@ class Manga(models.Model):
     Status = models.CharField(max_length=64, choices=STATUS_CHOICES)
     Chapters = models.IntegerField()
 
-    moderation_status = models.CharField(max_length=10, choices=MOD_CHOICES, default='pending')
-    moderation_date = models.DateTimeField(null=True, blank=True)  # Новое поле для хранения даты успешной модерации
+    Moderation_status = models.CharField(max_length=10, choices=MOD_CHOICES, default='pending')
+    Moderation_date = models.DateTimeField(null=True, blank=True)  # Новое поле для хранения даты успешной модерации
+    Mod_message = models.CharField(max_length=256,blank=True)
+    Url_message = models.CharField(max_length=512,blank=True)
 
-
-    Image = models.ImageField(upload_to='Manga/', default='Manga/image_10.png')
+    Image = models.ImageField(upload_to='Manga/', default='Manga/image_10.jpg')
     Rating = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(10)])
     RatingCount = models.IntegerField(default=0)
     Category = models.ManyToManyField(Category, related_name='manga')
@@ -92,6 +91,7 @@ class MangaPage(models.Model):
 
     def __str__(self):
         return f"Volume {self.volume}, Chapter {self.chapter}, Page {self.page_number} ,Chapter_Title{self.Chapter_Title} "
+
 
 
 class User(AbstractUser):
@@ -145,8 +145,6 @@ class Review(models.Model):
         unique_together = ('user', 'manga')  # Один пользователь может оставить только один отзыв на одну мангу
 
 
-
-
 class Person(models.Model):
     Types = [
         ('Автор', 'author'),
@@ -163,8 +161,10 @@ class Person(models.Model):
     Country = models.CharField(max_length=32)
     Type = models.CharField(max_length=32, choices=Types)
     About = models.TextField(max_length=500)
-    moderation_status = models.CharField(max_length=10, choices=MOD_CHOICES, default='pending')
-    moderation_date = models.DateTimeField(null=True, blank=True)  # Новое поле для хранения даты успешной модерации
+    Moderation_status = models.CharField(max_length=10, choices=MOD_CHOICES, default='pending')
+    Moderation_date = models.DateTimeField(null=True, blank=True)
+    Mod_message = models.CharField(max_length=256, blank=True)
+
 
 
     def __str__(self):

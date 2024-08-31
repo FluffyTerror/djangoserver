@@ -60,7 +60,7 @@ class CatalogListView(APIView):
         category_filter = request.data.get('category', [])  # По умолчанию фильтр по категории пустой список
 
         # Начинаем с базового QuerySet
-        queryset = Manga.objects.all().filter(moderation_status='approved')
+        queryset = Manga.objects.all().filter(Moderation_status='approved')
 
         # Фильтрация по статусу (если статусы переданы)
         if status_filter:
@@ -205,7 +205,7 @@ class MangaListView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request, *args, **kwargs):
-        mangas = Manga.objects.filter(moderation_status='approved')  # Показываем только одобренные манги
+        mangas = Manga.objects.filter(Moderation_status='approved')  # Показываем только одобренные манги
         serializer = MangaSerializer(mangas, many=True)
         return Response(serializer.data)
 
@@ -289,13 +289,13 @@ class ApproveMangaView(APIView):
             action = request.data.get('action')
 
             if action == 'approve':
-                manga.moderation_status = 'approved'
-                manga.moderation_date = timezone.now()  # Устанавливаем дату успешной модерации
+                manga.Moderation_status = 'approved'
+                manga.Moderation_date = timezone.now()  # Устанавливаем дату успешной модерации
                 manga.save()
                 return Response({"status": "Manga approved"}, status=status.HTTP_200_OK)
             elif action == 'reject':
-                manga.moderation_status = 'rejected'
-                manga.moderation_date = None  # Сбрасываем дату, если модерация не успешна
+                manga.Moderation_status = 'rejected'
+                manga.Moderation_date = None  # Сбрасываем дату, если модерация не успешна
                 manga.save()
                 return Response({"status": "Manga rejected"}, status=status.HTTP_200_OK)
             else:
@@ -509,7 +509,7 @@ class MangaTitleSearchView(APIView):
         if query:
             # Поиск по тайтлу, автору и художнику
             mangas = Manga.objects.filter(
-                Q(Title__icontains=query),moderation_status='approved'
+                Q(Title__icontains=query),Moderation_status='approved'
             ).distinct()
 
             # Сериализация и возврат данных
@@ -527,7 +527,7 @@ class MangaAuthorSearchView(APIView):
         if query:
             # Поиск по тайтлу, автору и художнику
             mangas = Manga.objects.filter(
-                Q(Author__icontains=query),moderation_status='approved'
+                Q(Author__icontains=query),Moderation_status='approved'
             ).distinct()
 
             # Сериализация и возврат данных
@@ -543,7 +543,7 @@ class MangaPublisherSearchView(APIView):
 
         if query:
             mangas = Manga.objects.filter(
-                Q(Publisher__icontains=query),moderation_status='approved'
+                Q(Publisher__icontains=query),Moderation_status='approved'
             ).distinct()
 
             serializer = MangaSerializer(mangas, many=True)
@@ -563,7 +563,7 @@ class PopularMangaView(APIView):
         time_filter = request.query_params.get('time_filter')  # фильтр по времени
 
         # Получаем начальный queryset для манги
-        queryset = Manga.objects.all().filter(moderation_status='approved')
+        queryset = Manga.objects.all().filter(Moderation_status='approved')
 
         # Фильтрация по тегам
         if tags:
@@ -602,7 +602,7 @@ class NewReleasesView(APIView):
         time_filter = request.query_params.get('time_filter')  # фильтр по времени
 
         # Получаем начальный queryset для манги
-        queryset = Manga.objects.all().filter(moderation_status='approved')
+        queryset = Manga.objects.all().filter(Moderation_status='approved')
 
         # Фильтрация по тегам
         if tags:
@@ -641,7 +641,7 @@ class AllPopularMangaView(APIView):
         time_filter = request.data.get('time_filter')  # фильтр по времени
 
         # Получаем начальный queryset для манги
-        queryset = Manga.objects.all().filter(moderation_status='approved')
+        queryset = Manga.objects.all().filter(Moderation_status='approved')
 
         # Фильтрация по тегам
         if tags:
@@ -702,13 +702,13 @@ class ApprovePersonView(APIView):
             action = request.data.get('action')
 
             if action == 'approve':
-                person.moderation_status = 'approved'
-                person.moderation_date = timezone.now()  # Устанавливаем дату успешной модерации
+                person.Moderation_status = 'approved'
+                person.Moderation_date = timezone.now()  # Устанавливаем дату успешной модерации
                 person.save()
                 return Response({"status": "Person approved"}, status=status.HTTP_200_OK)
             elif action == 'reject':
-                person.moderation_status = 'rejected'
-                person.moderation_date = None  # Сбрасываем дату, если модерация не успешна
+                person.Moderation_status = 'rejected'
+                person.Moderation_date = None  # Сбрасываем дату, если модерация не успешна
                 person.save()
                 return Response({"status": "Person rejected"}, status=status.HTTP_200_OK)
             else:
@@ -720,20 +720,20 @@ class ApprovePersonView(APIView):
 
 class AuthorListView(APIView):
     def get(self, request, format=None):
-        authors = Person.objects.filter(Type='Автор',moderation_status='approved')
+        authors = Person.objects.filter(Type='Автор',Moderation_status='approved')
         serializer = PersonSerializer(authors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class PublisherListView(APIView):
     def get(self, request, format=None):
-        authors = Person.objects.filter(Type='Издатель', moderation_status='approved')
+        authors = Person.objects.filter(Type='Издатель', Moderation_status='approved')
         serializer = PersonSerializer(authors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ArtistListView(APIView):
     def get(self, request, format=None):
-        authors = Person.objects.filter(Type='Художник',moderation_status='approved')
+        authors = Person.objects.filter(Type='Художник', Moderation_status='approved')
         serializer = PersonSerializer(authors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

@@ -136,7 +136,7 @@ class MangaSerializer(serializers.ModelSerializer):
         fields = (
             "id", "Title", "Author", "Description", "Release", "Status",
             "Chapters", "Artist", "categories", "Image", "Rating",
-            "RatingCount", "categories_display", "Created_at", "Publisher","Mod_status", "Mod_date"
+            "RatingCount", "categories_display", "Created_at", "Publisher","Mod_status", "Mod_date","Mod_message", "Url_message"
         )
         read_only_fields = ("id", "Rating", "RatingCount", "Mod_status", "Mod_date")
 
@@ -234,6 +234,7 @@ class MangaSerializer(serializers.ModelSerializer):
             return f'/media/{obj.Image.name}'
         return None
 
+
 class UserSerializer(serializers.ModelSerializer):
     bookmarks = MangaSerializer(many=True, read_only=True)
     reviews = ReviewSerializer(many=True, read_only=True)
@@ -295,5 +296,5 @@ class PersonSerializer(serializers.ModelSerializer):
     Mod_date = serializers.DateTimeField(read_only=True)
     class Meta:
         model = Person
-        fields = ['id', 'Nickname', 'Country', 'Type', 'About', 'profile_image',"Mod_status", "Mod_date"]
+        fields = ['id', 'Nickname', 'Country', 'Type', 'About', 'profile_image',"Mod_status", "Mod_date","Mod_message"]
         read_only_fields = ("Mod_status", "Mod_date")
