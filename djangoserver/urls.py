@@ -64,6 +64,9 @@ urlpatterns = [
     path('search/publisher/', MangaPublisherSearchView.as_view(), name='publisher search'),
 
 
+    path('<int:manga_id>/approve/',ApproveMangaView.as_view(),name= 'admin approve'),
+
+
     path('get_token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),

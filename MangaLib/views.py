@@ -1,12 +1,12 @@
 import os
 from datetime import datetime, timedelta
-from django.utils.text import slugify
 from django.contrib.auth import get_user_model
 from django.db.models import Q,Count
 from django.http import Http404, HttpResponse
+from django.utils import timezone
 from rest_framework import generics, status, views
-from rest_framework.generics import get_object_or_404, ListAPIView, CreateAPIView, RetrieveAPIView
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
+from rest_framework.generics import get_object_or_404, ListAPIView, CreateAPIView
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -60,7 +60,7 @@ class CatalogListView(APIView):
         category_filter = request.data.get('category', [])  # По умолчанию фильтр по категории пустой список
 
         # Начинаем с базового QuerySet
-        queryset = Manga.objects.all()
+        queryset = Manga.objects.all().filter(moderation_status='approved')
 
         # Фильтрация по статусу (если статусы переданы)
         if status_filter:
@@ -144,6 +144,7 @@ class NewsListView(APIView):
         # Возвращаем сериализованные данные
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class MangaUploadView(views.APIView):
     def post(self, request, manga_id):
         try:
@@ -204,14 +205,10 @@ class MangaListView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request, *args, **kwargs):
-        # Получаем все объекты манги
-        queryset = Manga.objects.all()
+        mangas = Manga.objects.filter(moderation_status='approved')  # Показываем только одобренные манги
+        serializer = MangaSerializer(mangas, many=True)
+        return Response(serializer.data)
 
-        # Сериализуем данные
-        serializer = MangaSerializer(queryset, many=True)
-
-        # Возвращаем сериализованные данные
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class Userimg(APIView):
     # Разрешаем доступ всем пользователям
@@ -281,6 +278,31 @@ class UserUpdateView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+class ApproveMangaView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]  # Добавляем наше новое разрешение
+
+    def post(self, request, manga_id):
+        try:
+            manga = Manga.objects.get(pk=manga_id)
+            action = request.data.get('action')
+
+            if action == 'approve':
+                manga.moderation_status = 'approved'
+                manga.moderation_date = timezone.now()  # Устанавливаем дату успешной модерации
+                manga.save()
+                return Response({"status": "Manga approved"}, status=status.HTTP_200_OK)
+            elif action == 'reject':
+                manga.moderation_status = 'rejected'
+                manga.moderation_date = None  # Сбрасываем дату, если модерация не успешна
+                manga.save()
+                return Response({"status": "Manga rejected"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Manga.DoesNotExist:
+            return Response({"error": "Manga not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
 
@@ -486,7 +508,7 @@ class MangaTitleSearchView(APIView):
         if query:
             # Поиск по тайтлу, автору и художнику
             mangas = Manga.objects.filter(
-                Q(Title__icontains=query)
+                Q(Title__icontains=query),moderation_status='approved'
             ).distinct()
 
             # Сериализация и возврат данных
@@ -504,7 +526,7 @@ class MangaAuthorSearchView(APIView):
         if query:
             # Поиск по тайтлу, автору и художнику
             mangas = Manga.objects.filter(
-                Q(Author__icontains=query)
+                Q(Author__icontains=query),moderation_status='approved'
             ).distinct()
 
             # Сериализация и возврат данных
@@ -520,7 +542,7 @@ class MangaPublisherSearchView(APIView):
 
         if query:
             mangas = Manga.objects.filter(
-                Q(Publisher__icontains=query)
+                Q(Publisher__icontains=query),moderation_status='approved'
             ).distinct()
 
             serializer = MangaSerializer(mangas, many=True)
@@ -540,7 +562,7 @@ class PopularMangaView(APIView):
         time_filter = request.query_params.get('time_filter')  # фильтр по времени
 
         # Получаем начальный queryset для манги
-        queryset = Manga.objects.all()
+        queryset = Manga.objects.all().filter(moderation_status='approved')
 
         # Фильтрация по тегам
         if tags:
@@ -579,7 +601,7 @@ class NewReleasesView(APIView):
         time_filter = request.query_params.get('time_filter')  # фильтр по времени
 
         # Получаем начальный queryset для манги
-        queryset = Manga.objects.all()
+        queryset = Manga.objects.all().filter(moderation_status='approved')
 
         # Фильтрация по тегам
         if tags:
@@ -618,7 +640,7 @@ class AllPopularMangaView(APIView):
         time_filter = request.data.get('time_filter')  # фильтр по времени
 
         # Получаем начальный queryset для манги
-        queryset = Manga.objects.all()
+        queryset = Manga.objects.all().filter(moderation_status='approved')
 
         # Фильтрация по тегам
         if tags:

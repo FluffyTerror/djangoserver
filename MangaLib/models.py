@@ -41,6 +41,11 @@ class Manga(models.Model):
         ('Выпуск прекращён', 'discontinued'),
         ('Выходит', 'ongoing'),
     ]
+    MOD_CHOICES = [
+        ('pending', 'На модерации'),
+        ('approved', 'Одобрено'),
+        ('rejected', 'Отклонено'),
+    ]
 
     Title = models.CharField(max_length=128)
     Author = models.CharField(max_length=64)
@@ -50,6 +55,10 @@ class Manga(models.Model):
     Release = models.DateField()
     Status = models.CharField(max_length=64, choices=STATUS_CHOICES)
     Chapters = models.IntegerField()
+
+    moderation_status = models.CharField(max_length=10, choices=MOD_CHOICES, default='pending')
+    moderation_date = models.DateTimeField(null=True, blank=True)  # Новое поле для хранения даты успешной модерации
+
 
     Image = models.ImageField(upload_to='Manga/', default='Manga/image_10.png')
     Rating = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(10)])
@@ -93,6 +102,7 @@ class User(AbstractUser):
     about = models.CharField(max_length=500, default='Что-то обо мне...')
     bookmarks = models.ManyToManyField(Manga, related_name='bookmarked_users',default=None)
     favourite = models.ManyToManyField(Manga, related_name='favourite_users',default=None)
+    is_admin = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

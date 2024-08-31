@@ -128,14 +128,18 @@ class MangaSerializer(serializers.ModelSerializer):
     Status = serializers.ChoiceField(choices=Manga.STATUS_CHOICES)
     Image = serializers.ImageField(required=False)
 
+    Mod_status = serializers.ChoiceField(choices=Manga.MOD_CHOICES, read_only=True)
+    Mod_date = serializers.DateTimeField(read_only=True)  # Поле только для чтения
+
     class Meta:
         model = Manga
         fields = (
             "id", "Title", "Author", "Description", "Release", "Status",
             "Chapters", "Artist", "categories", "Image", "Rating",
-            "RatingCount", "categories_display", "Created_at", "Publisher"
+            "RatingCount", "categories_display", "Created_at", "Publisher","Mod_status", "Mod_date"
         )
-        read_only_fields = ("id", "Rating", "RatingCount")
+        read_only_fields = ("id", "Rating", "RatingCount", "Mod_status", "Mod_date")
+
 
     def get_categories_display(self, obj):
         return [category.name for category in obj.Category.all()]
