@@ -20,14 +20,6 @@ from django.shortcuts import render
 
 
 
-class UserCreatedMangaView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-        manga_created_by_user = Manga.objects.filter(created_by=user)
-        serializer = MangaModerationSerializer(manga_created_by_user, many=True)
-        return Response(serializer.data)
 
 class DeleteUserView(APIView):#удаление юзера
     permission_classes = [IsAuthenticated]

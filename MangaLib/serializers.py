@@ -336,3 +336,9 @@ class MangaPageSerializer(serializers.ModelSerializer):
     class Meta:
         model = MangaPage
         fields = ['volume', 'chapter', 'page_number', 'page_image', 'Chapter_Title']
+
+
+class MangaModerationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Manga
+        fields = ['id', 'Title', 'Moderation_status', 'Moderation_date', 'Mod_message']

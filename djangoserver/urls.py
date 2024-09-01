@@ -18,7 +18,7 @@ urlpatterns = [
     path('api/user_img/<str:username>/', Userimg.as_view(), name='user_image'),
     path('api/user/<str:username>/bookmarks/', UsernameBookmarksView.as_view(), name='username-bookmarks'),
     path('api/user/delete/', DeleteUserView.as_view(), name='delete-user'),
-    path('api/user/manga/moderation/', UserCreatedMangaView.as_view(), name='user-created-manga'),
+    #path('api/user/manga/moderation/', UserCreatedMangaView.as_view(), name='user-created-manga'),
 
     path('api/news/', NewsListView.as_view(), name='news-list'),
     path('api/news/create/', NewsCreateView.as_view(), name='news-create'),
