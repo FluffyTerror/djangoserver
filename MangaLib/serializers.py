@@ -131,6 +131,12 @@ class MangaSerializer(serializers.ModelSerializer):
     Mod_status = serializers.ChoiceField(choices=Manga.MOD_CHOICES, read_only=True)
     Mod_date = serializers.DateTimeField(read_only=True)  # Поле только для чтения
 
+    Url_message = serializers.ListField(
+        child=serializers.URLField(),
+        required=False,
+        allow_empty=True
+    )  # Массив URL, который будет сериализован и десериализован
+
     class Meta:
         model = Manga
         fields = (
@@ -146,6 +152,10 @@ class MangaSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         categories_data = validated_data.pop('categories', [])
+        url_message_data = validated_data.pop('Url_message', [])
+
+        # Преобразуем список URL в строку, разделяя их запятыми
+        validated_data['Url_message'] = ','.join(url_message_data)
 
         manga = Manga.objects.create(**validated_data)
 
@@ -216,6 +226,12 @@ class MangaSerializer(serializers.ModelSerializer):
 
             instance.Image.name = os.path.join(instance.Title, 'cover', 'cover.jpg')
 
+        url_message_data = validated_data.pop('Url_message', None)
+
+        if url_message_data is not None:
+            # Преобразуем список URL в строку
+            instance.Url_message = ','.join(url_message_data)
+
         categories_data = validated_data.pop('categories', None)
         if categories_data is not None:
             instance.Category.clear()
@@ -233,6 +249,13 @@ class MangaSerializer(serializers.ModelSerializer):
             # Возвращаем относительный путь
             return f'/media/{obj.Image.name}'
         return None
+
+    def to_representation(self, instance):
+        # Преобразуем строку обратно в список при выдаче данных
+        ret = super().to_representation(instance)
+        if instance.Url_message:
+            ret['Url_message'] = instance.Url_message.split(',')
+        return ret
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -298,3 +321,23 @@ class PersonSerializer(serializers.ModelSerializer):
         model = Person
         fields = ['id', 'Nickname', 'Country', 'Type', 'About', 'profile_image',"Mod_status", "Mod_date","Mod_message"]
         read_only_fields = ("Mod_status", "Mod_date")
+
+
+
+
+class MangaChapterSerializer(serializers.Serializer):
+    chapter = serializers.CharField()  # Теперь здесь будет название главы
+    page_count = serializers.IntegerField()
+
+class MangaVolumeSerializer(serializers.Serializer):
+    volume = serializers.IntegerField()
+    chapter_count = serializers.IntegerField()
+    chapters = MangaChapterSerializer(many=True)
+
+
+class MangaPageSerializer(serializers.ModelSerializer):
+    page_image = serializers.ImageField(use_url=True)  # Используем URL для изображения
+
+    class Meta:
+        model = MangaPage
+        fields = ['volume', 'chapter', 'page_number', 'page_image', 'Chapter_Title']

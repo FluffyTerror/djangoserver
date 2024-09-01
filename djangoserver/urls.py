@@ -67,7 +67,8 @@ urlpatterns = [
     path('<int:manga_id>/approve_manga/',ApproveMangaView.as_view(),name= 'manga approve'),
     path('<int:person_id>/approve_person/', ApprovePersonView.as_view(), name='person approve'),
 
-
+    path('manga/<int:manga_id>/volumes/', MangaVolumesAndChaptersView.as_view(), name='manga-volumes-and-chapters'),
+    path('manga_read/<int:manga_id>/', MangaPageDetailView.as_view(), name='manga-page-detail'),
 
     path('get_token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

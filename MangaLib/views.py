@@ -1,7 +1,9 @@
 import os
 from datetime import datetime, timedelta
+from itertools import groupby
+
 from django.contrib.auth import get_user_model
-from django.db.models import Q,Count
+from django.db.models import Q,Count,F
 from django.http import Http404, HttpResponse
 from django.utils import timezone
 from rest_framework import generics, status, views
@@ -12,10 +14,88 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import User, Manga, Review, News, Category, Person
+from .models import User, Manga, Review, News, Category, Person, MangaPage
 from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, MangaZipSerializer, NewsSerializer, \
-    CategorySerializer, PersonSerializer
+    CategorySerializer, PersonSerializer, MangaVolumeSerializer, MangaPageSerializer
 
+
+class MangaPageDetailView(generics.GenericAPIView):#не работает
+    serializer_class = MangaPageSerializer
+
+    def get(self, request, manga_id):
+        # Извлечение параметров из query parameters
+        volume = request.query_params.get('volume')
+        chapter_title = request.query_params.get('chapter_title')
+        page_number = request.query_params.get('page_number')
+
+        # Проверка, что все необходимые параметры были предоставлены
+        if volume is None or chapter_title is None or page_number is None:
+            return Response({"detail": "Missing required query parameters."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            manga_page = MangaPage.objects.get(
+                manga_id=manga_id,
+                volume=volume,
+                Chapter_Title=chapter_title,
+                page_number=page_number
+            )
+        except MangaPage.DoesNotExist:
+            return Response({"detail": "Page not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(manga_page)
+        return Response(serializer.data)
+
+
+
+
+class MangaVolumesAndChaptersView(APIView):
+
+    def get(self, request, manga_id):
+        # Проверяем, существует ли манга с данным ID
+        manga = get_object_or_404(Manga, id=manga_id)
+
+        # Получаем тома и главы манги
+        volumes_and_chapters = (
+            MangaPage.objects
+            .filter(manga_id=manga_id)
+            .values('volume', 'Chapter_Title')
+            .annotate(
+                chapter_count=Count('Chapter_Title', distinct=True),
+                page_count=Count('id')  # Подсчет количества страниц в каждой главе
+            )
+            .order_by('volume', 'Chapter_Title')
+        )
+
+        # Форматируем результат для сериализации
+        data = []
+        for volume, chapters in groupby(volumes_and_chapters, key=lambda x: x['volume']):
+            chapter_list = []
+            for chapter in chapters:
+                chapter_list.append({
+                    'chapter': chapter['Chapter_Title'],  # Используем название главы
+                    'page_count': chapter['page_count']
+                })
+            data.append({
+                'volume': volume,
+                'chapter_count': len(chapter_list),
+                'chapters': chapter_list
+            })
+
+        # Добавляем название манги в результат
+        result = {
+            'manga_title': manga.Title,
+            'volumes': data
+        }
+
+        # Сериализуем данные
+        serializer = MangaVolumeSerializer(data=result['volumes'], many=True)
+        if serializer.is_valid():
+            response_data = {
+                'manga_title': result['manga_title'],
+                'volumes': serializer.data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UsernameBookmarksView(APIView):
     def post(self, request, username):
