@@ -16,6 +16,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, Manga, Review, News, Category, Person, MangaPage
 from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, MangaZipSerializer, NewsSerializer, \
     CategorySerializer, PersonSerializer, MangaVolumeSerializer
+from django.shortcuts import render
 
 
 class MangaPageDetailView(APIView):
@@ -809,3 +810,6 @@ class ArtistListView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+
+def index(request):
+    return render(request,'index.html')
