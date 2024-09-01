@@ -103,7 +103,7 @@ class MangaZipSerializer(serializers.Serializer):
                     volume=volume,
                     chapter=chapter,
                     page_number=index,
-                    page_image=f'manga/{manga_title}/volume_{volume}/chapter_{chapter}_{chapter_title}/{new_file_name}',
+                    page_image=f'manga/{manga_title}/volume_{volume}/{chapter_title}/{new_file_name}',
                     Chapter_Title=chapter_title  # Сохраняем название главы в поле модели
                 )
 
@@ -115,7 +115,6 @@ class MangaZipSerializer(serializers.Serializer):
             # Убираем домен и возвращаем только относительный путь
             return obj.Image.url
         return None
-
 
 
 class MangaSerializer(serializers.ModelSerializer):
@@ -142,10 +141,10 @@ class MangaSerializer(serializers.ModelSerializer):
         fields = (
             "id", "Title", "Author", "Description", "Release", "Status",
             "Chapters", "Artist", "categories", "Image", "Rating",
-            "RatingCount", "categories_display", "Created_at", "Publisher","Mod_status", "Mod_date","Mod_message", "Url_message"
+            "RatingCount", "categories_display", "Created_at", "Publisher", "Mod_status", "Mod_date", "Mod_message",
+            "Url_message"
         )
         read_only_fields = ("id", "Rating", "RatingCount", "Mod_status", "Mod_date")
-
 
     def get_categories_display(self, obj):
         return [category.name for category in obj.Category.all()]
@@ -282,16 +281,13 @@ class UserSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
-
-
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['name']
 
 
-
-class UserBriefSerializer(serializers.ModelSerializer):# костыль для новостей
+class UserBriefSerializer(serializers.ModelSerializer):  # костыль для новостей
     class Meta:
         model = User
         fields = ['username', 'profile_image']
@@ -304,30 +300,29 @@ class UserBriefSerializer(serializers.ModelSerializer):# костыль для �
         return None
 
 
-
 class NewsSerializer(serializers.ModelSerializer):
     User = UserBriefSerializer(read_only=True)
 
     class Meta:
         model = News
-        fields = ['User','id', 'Title', 'Content', 'Created_at']
-
+        fields = ['User', 'id', 'Title', 'Content', 'Created_at']
 
 
 class PersonSerializer(serializers.ModelSerializer):
     Mod_status = serializers.ChoiceField(choices=Person.MOD_CHOICES, read_only=True)
     Mod_date = serializers.DateTimeField(read_only=True)
+
     class Meta:
         model = Person
-        fields = ['id', 'Nickname', 'Country', 'Type', 'About', 'profile_image',"Mod_status", "Mod_date","Mod_message"]
+        fields = ['id', 'Nickname', 'Country', 'Type', 'About', 'profile_image', "Mod_status", "Mod_date",
+                  "Mod_message"]
         read_only_fields = ("Mod_status", "Mod_date")
-
-
 
 
 class MangaChapterSerializer(serializers.Serializer):
     chapter = serializers.CharField()  # Теперь здесь будет название главы
     page_count = serializers.IntegerField()
+
 
 class MangaVolumeSerializer(serializers.Serializer):
     volume = serializers.IntegerField()

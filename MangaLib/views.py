@@ -1,10 +1,9 @@
 import os
 from datetime import datetime, timedelta
 from itertools import groupby
-
 from django.contrib.auth import get_user_model
-from django.db.models import Q,Count,F
-from django.http import Http404, HttpResponse
+from django.db.models import Q, Count
+from django.http import Http404, HttpResponse, FileResponse
 from django.utils import timezone
 from rest_framework import generics, status, views
 from rest_framework.generics import get_object_or_404, ListAPIView, CreateAPIView
@@ -16,11 +15,10 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, Manga, Review, News, Category, Person, MangaPage
 from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, MangaZipSerializer, NewsSerializer, \
-    CategorySerializer, PersonSerializer, MangaVolumeSerializer, MangaPageSerializer
+    CategorySerializer, PersonSerializer, MangaVolumeSerializer
 
 
-class MangaPageDetailView(generics.GenericAPIView):#не работает
-    serializer_class = MangaPageSerializer
+class MangaPageDetailView(APIView):
 
     def get(self, request, manga_id):
         # Извлечение параметров из query parameters
@@ -42,9 +40,14 @@ class MangaPageDetailView(generics.GenericAPIView):#не работает
         except MangaPage.DoesNotExist:
             return Response({"detail": "Page not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = self.get_serializer(manga_page)
-        return Response(serializer.data)
+        # Предполагаем, что поле с изображением называется `image`
+        image = manga_page.page_image
 
+        if not image:
+            return Response({"detail": "Image not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Возвращаем файл изображения как ответ
+        return FileResponse(image)
 
 
 
@@ -96,6 +99,7 @@ class MangaVolumesAndChaptersView(APIView):
             }
             return Response(response_data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class UsernameBookmarksView(APIView):
     def post(self, request, username):
@@ -171,6 +175,7 @@ class CatalogListView(APIView):
         serializer = MangaSerializer(queryset, many=True)
         return Response(serializer.data)
 
+
 class StatusListView(APIView):
     def get(self, request, *args, **kwargs):
         statuses = [
@@ -237,8 +242,6 @@ class MangaUploadView(views.APIView):
             manga = serializer.save()
             return Response({'message': 'Manga uploaded successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 
 class MangaIdView(APIView):
@@ -312,7 +315,6 @@ class Userimg(APIView):
             raise Http404("Image file not found.")
 
 
-
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
@@ -359,7 +361,6 @@ class UserUpdateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class ApproveMangaView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]  # Добавляем наше новое разрешение
 
@@ -385,7 +386,6 @@ class ApproveMangaView(APIView):
             return Response({"error": "Manga not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-
 class MangaCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -401,7 +401,6 @@ class MangaCreateView(APIView):
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class MangaDetailView(APIView): # GET конкретный тайтл
@@ -521,7 +520,6 @@ class MangaReviewsView(generics.ListAPIView): # GET список отзывов
         return Review.objects.filter(manga__id=manga_id)
 
 
-
 class CustomUserCreate(APIView): # POST создать юзера
     permission_classes = [AllowAny]
 
@@ -533,8 +531,6 @@ class CustomUserCreate(APIView): # POST создать юзера
                 json = serializer.data
                 return Response(json, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 
 class CustomUserLogin(APIView):# POST залогинить юзера
@@ -558,7 +554,6 @@ class CustomUserLogin(APIView):# POST залогинить юзера
                 return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         else:
             return Response({'error': 'Email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class LogoutAPIView(APIView):# POST разалогинить юзера
@@ -599,7 +594,6 @@ class MangaTitleSearchView(APIView):
             return Response({"error": "No query parameter provided"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class MangaAuthorSearchView(APIView):
     def post(self, request, *args, **kwargs):
         query = request.data.get('query', None)
@@ -630,7 +624,6 @@ class MangaPublisherSearchView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response({"error": "No query parameter provided"}, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class PopularMangaView(APIView):
@@ -671,7 +664,6 @@ class PopularMangaView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
 class NewReleasesView(APIView):
     serializer_class = MangaSerializer
     permission_classes = [AllowAny]
@@ -708,7 +700,6 @@ class NewReleasesView(APIView):
         return Response({
             'manga': manga_serializer.data,
         }, status=status.HTTP_200_OK)
-
 
 
 class AllPopularMangaView(APIView):
@@ -749,7 +740,6 @@ class AllPopularMangaView(APIView):
         return Response({
             'manga': manga_serializer.data,
         }, status=status.HTTP_200_OK)
-
 
 
 class CategoryListView(ListAPIView):
@@ -803,6 +793,7 @@ class AuthorListView(APIView):
         authors = Person.objects.filter(Type='Автор',Moderation_status='approved')
         serializer = PersonSerializer(authors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class PublisherListView(APIView):
     def get(self, request, format=None):

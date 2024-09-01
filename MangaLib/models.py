@@ -13,22 +13,25 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+
 def manga_cover_directory_path(instance, filename):
     # Обложки манги будут храниться в папке 'media/Manga/{manga_title}/cover/{filename}'
     return f'Manga/{slugify(instance.Title)}/cover/{filename}'
+
 
 def manga_pages_directory_path(instance, filename):
     # Страницы манги будут храниться в папке 'media/Manga/{manga_title}/volume_{volume}/chapter_{chapter}/{page_number}.jpg'
     return f'Manga/{slugify(instance.manga.Title)}/volume_{instance.volume}/chapter_{instance.chapter}/{filename}'
 
+
 def user_profile_image_directory_path(instance, filename):
     # Файлы пользователей будут храниться в папке 'media/Users/{user_id}/{filename}'
     return f'Users/{instance.id}/{filename}'
 
+
 def person_image_directory_path(instance, filename):
     # Файлы будут храниться в папке 'media/Persons/{person_nickname}/{filename}'
     return f'Persons/{instance.Nickname}/{filename}'
-
 
 
 class Manga(models.Model):
@@ -56,8 +59,8 @@ class Manga(models.Model):
 
     Moderation_status = models.CharField(max_length=10, choices=MOD_CHOICES, default='pending')
     Moderation_date = models.DateTimeField(null=True, blank=True)  # Новое поле для хранения даты успешной модерации
-    Mod_message = models.CharField(max_length=256,blank=True)
-    Url_message = models.CharField(max_length=512,blank=True)
+    Mod_message = models.CharField(max_length=256, blank=True)
+    Url_message = models.CharField(max_length=512, blank=True)
 
     Image = models.ImageField(upload_to='Manga/', default='Manga/image_10.jpg')
     Rating = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(10)])
@@ -77,31 +80,30 @@ class Manga(models.Model):
         os.makedirs(manga_dir, exist_ok=True)
 
 
-
 class MangaPage(models.Model):
     manga = models.ForeignKey(Manga, related_name='pages', on_delete=models.CASCADE)
     page_image = models.ImageField(upload_to=manga_pages_directory_path)
     volume = models.IntegerField(default=1)
     chapter = models.IntegerField(default=1)
     page_number = models.IntegerField(default=1)
-    Chapter_Title = models.CharField(max_length=128,default="Chapter title")
+    Chapter_Title = models.CharField(max_length=128, default="Chapter title")
 
     class Meta:
-        unique_together = ('manga', 'volume', 'chapter', 'page_image','Chapter_Title')
+        unique_together = ('manga', 'volume', 'chapter', 'page_image', 'Chapter_Title')
 
     def __str__(self):
         return f"Volume {self.volume}, Chapter {self.chapter}, Page {self.page_number} ,Chapter_Title{self.Chapter_Title} "
 
 
-
 class User(AbstractUser):
     username = models.CharField(max_length=24, unique=True)
     email = models.EmailField(max_length=48, unique=True)
-    profile_image = models.ImageField(upload_to=user_profile_image_directory_path, default='Users/User profile picture.png')
+    profile_image = models.ImageField(upload_to=user_profile_image_directory_path,
+                                      default='Users/User profile picture.png')
     password = models.CharField(max_length=128)
     about = models.CharField(max_length=500, default='Что-то обо мне...')
-    bookmarks = models.ManyToManyField(Manga, related_name='bookmarked_users',default=None)
-    favourite = models.ManyToManyField(Manga, related_name='favourite_users',default=None)
+    bookmarks = models.ManyToManyField(Manga, related_name='bookmarked_users', default=None)
+    favourite = models.ManyToManyField(Manga, related_name='favourite_users', default=None)
     is_admin = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
@@ -113,8 +115,6 @@ class User(AbstractUser):
             self.password = make_password(self.password)
 
         super().save(*args, **kwargs)
-
-
 
     def __str__(self):
         return self.email
@@ -128,7 +128,6 @@ class News(models.Model):
 
     def __str__(self):
         return self.Title
-
 
 
 class Review(models.Model):
@@ -165,8 +164,5 @@ class Person(models.Model):
     Moderation_date = models.DateTimeField(null=True, blank=True)
     Mod_message = models.CharField(max_length=256, blank=True)
 
-
-
     def __str__(self):
         return self.Nickname
-
