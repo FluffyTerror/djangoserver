@@ -15,8 +15,26 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, Manga, Review, News, Category, Person, MangaPage
 from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, MangaZipSerializer, NewsSerializer, \
-    CategorySerializer, PersonSerializer, MangaVolumeSerializer
+    CategorySerializer, PersonSerializer, MangaVolumeSerializer, MangaModerationSerializer
 from django.shortcuts import render
+
+
+
+class UserCreatedMangaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        manga_created_by_user = Manga.objects.filter(created_by=user)
+        serializer = MangaModerationSerializer(manga_created_by_user, many=True)
+        return Response(serializer.data)
+
+class DeleteUserView(APIView):#удаление юзера
+    permission_classes = [IsAuthenticated]
+    def delete(self, request):
+        user = request.user
+        user.delete()
+        return Response({"detail": "User deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
 
 class MangaPageDetailView(APIView):
