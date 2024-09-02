@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, re_path
 from django.conf import settings
 from django.conf.urls.static import static
+
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -15,7 +16,7 @@ urlpatterns = [
     path('api/profile/', ProfileView.as_view(), name='profile view'),
     path('api/user/update/', UserUpdateView.as_view(), name='user-update'),
     path('api/user/', UsernameView.as_view(), name='user_view'),
-    path('api/user_img/<str:username>/', Userimg.as_view(), name='user_image'),
+    path('user_img/<str:username>/', Userimg.as_view(), name='user_image'),
     path('api/user/<str:username>/bookmarks/', UsernameBookmarksView.as_view(), name='username-bookmarks'),
     path('api/user/delete/', DeleteUserView.as_view(), name='delete-user'),
     #path('api/user/manga/moderation/', UserCreatedMangaView.as_view(), name='user-created-manga'),
@@ -52,26 +53,24 @@ urlpatterns = [
     path('api/logout/', LogoutAPIView.as_view(), name='logout'),
     path('api/login/', CustomUserLogin.as_view(), name='user-login'),
 
-    path('api/search/title/', MangaTitleSearchView.as_view(), name='title search'),
-    path('api/search/author/', MangaAuthorSearchView.as_view(), name='author search'),
-    path('api/search/publisher/', MangaPublisherSearchView.as_view(), name='publisher search'),
+    path('search/title/', MangaTitleSearchView.as_view(), name='title search'),
+    path('search/author/', MangaAuthorSearchView.as_view(), name='author search'),
+    path('search/publisher/', MangaPublisherSearchView.as_view(), name='publisher search'),
 
     path('api/<int:manga_id>/approve_manga/', ApproveMangaView.as_view(), name='manga approve'),
     path('api/<int:person_id>/approve_person/', ApprovePersonView.as_view(), name='person approve'),
 
     path('api/manga/<int:manga_id>/volumes/', MangaVolumesAndChaptersView.as_view(), name='manga-volumes-and-chapters'),
-    path('api/manga_read/<int:manga_id>/', MangaPageDetailView.as_view(), name='manga-page-detail'),
+    path('manga_read/<int:manga_id>/', MangaPageDetailView.as_view(), name='manga-page-detail'),
 
     path('api/get_token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 
-    path('', index,name='index'),
+
+    *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
+    *static(settings.STATIC_URL, document_root=settings.STATIC_ROOT),
+
+    path('', index, name='index'),
     re_path(r'^.*$', index, name='index'),
-    path('home/', index,name='index'),
-
-
-
 ]
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

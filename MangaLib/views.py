@@ -30,6 +30,7 @@ class DeleteUserView(APIView):#удаление юзера
 
 
 class MangaPageDetailView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, manga_id):
         # Извлечение параметров из query parameters
@@ -63,6 +64,7 @@ class MangaPageDetailView(APIView):
 
 
 class MangaVolumesAndChaptersView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, manga_id):
         # Проверяем, существует ли манга с данным ID
@@ -113,6 +115,7 @@ class MangaVolumesAndChaptersView(APIView):
 
 
 class UsernameBookmarksView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request, username):
         try:
             user = User.objects.get(username=username)
@@ -149,6 +152,7 @@ class UsernameBookmarksView(APIView):
 
 
 class CatalogListView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         sort_by = request.data.get('sort_by', 'popularity')  # По умолчанию сортировка по популярности
         status_filter = request.data.get('status', [])  # По умолчанию фильтр по статусу пустой список
@@ -200,7 +204,7 @@ class StatusListView(APIView):
 
 
 class NewsDetailView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
         # Получаем ID из параметров URL
@@ -220,6 +224,7 @@ class NewsDetailView(APIView):
 
 
 class NewsCreateView(CreateAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = News.objects.all()
     serializer_class = NewsSerializer
 
@@ -228,7 +233,7 @@ class NewsCreateView(CreateAPIView):
 
 
 class NewsListView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
         # Получаем все объекты новостей
@@ -242,6 +247,7 @@ class NewsListView(APIView):
 
 
 class MangaUploadView(views.APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request, manga_id):
         try:
             manga = Manga.objects.get(id=manga_id)
@@ -256,7 +262,7 @@ class MangaUploadView(views.APIView):
 
 
 class MangaIdView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [AllowAny]
     authentication_classes = [JWTAuthentication]
 
     def post(self, request, *args, **kwargs):
@@ -296,7 +302,7 @@ class MangaIdView(APIView):
 
 
 class MangaListView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
         mangas = Manga.objects.filter(Moderation_status='approved')  # Показываем только одобренные манги
@@ -306,7 +312,7 @@ class MangaListView(APIView):
 
 class Userimg(APIView):
     # Разрешаем доступ всем пользователям
-    permission_classes = []
+    permission_classes = [AllowAny]
 
     def get(self, request, username=None, *args, **kwargs):
         # Ищем пользователя по username
@@ -415,7 +421,7 @@ class MangaCreateView(APIView):
 
 
 class MangaDetailView(APIView): # GET конкретный тайтл
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [AllowAny]
 
     def get(self, request, pk, format=None):
         manga = get_object_or_404(Manga, pk=pk)
@@ -589,6 +595,7 @@ class LogoutAPIView(APIView):# POST разалогинить юзера
 
 
 class MangaTitleSearchView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request, *args, **kwargs):
         query = request.data.get('query', None)
 
@@ -606,6 +613,7 @@ class MangaTitleSearchView(APIView):
 
 
 class MangaAuthorSearchView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request, *args, **kwargs):
         query = request.data.get('query', None)
 
@@ -623,6 +631,7 @@ class MangaAuthorSearchView(APIView):
 
 
 class MangaPublisherSearchView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request, *args, **kwargs):
         query = request.data.get('query', None)
 
@@ -800,6 +809,7 @@ class ApprovePersonView(APIView):
 
 
 class AuthorListView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         authors = Person.objects.filter(Type='Автор',Moderation_status='approved')
         serializer = PersonSerializer(authors, many=True)
@@ -807,6 +817,7 @@ class AuthorListView(APIView):
 
 
 class PublisherListView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         authors = Person.objects.filter(Type='Издатель', Moderation_status='approved')
         serializer = PersonSerializer(authors, many=True)
@@ -814,6 +825,7 @@ class PublisherListView(APIView):
 
 
 class ArtistListView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         authors = Person.objects.filter(Type='Художник', Moderation_status='approved')
         serializer = PersonSerializer(authors, many=True)

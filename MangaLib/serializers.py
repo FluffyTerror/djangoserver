@@ -130,6 +130,7 @@ class MangaSerializer(serializers.ModelSerializer):
     Mod_status = serializers.ChoiceField(choices=Manga.MOD_CHOICES, read_only=True)
     Mod_date = serializers.DateTimeField(read_only=True)  # Поле только для чтения
 
+    Chapters = serializers.SerializerMethodField()
     Url_message = serializers.ListField(
         child=serializers.URLField(),
         required=False,
@@ -148,6 +149,11 @@ class MangaSerializer(serializers.ModelSerializer):
 
     def get_categories_display(self, obj):
         return [category.name for category in obj.Category.all()]
+
+    def get_Chapters(self, obj):
+        # Считаем количество уникальных глав (chapter) для этой манги
+        chapters_count = MangaPage.objects.filter(manga=obj).values('volume', 'chapter').distinct().count()
+        return chapters_count
 
     def create(self, validated_data):
         categories_data = validated_data.pop('categories', [])

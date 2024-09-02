@@ -55,7 +55,7 @@ class Manga(models.Model):
     Description = models.TextField(blank=True)
     Release = models.DateField()
     Status = models.CharField(max_length=64, choices=STATUS_CHOICES)
-    Chapters = models.IntegerField()
+    #Chapters = models.IntegerField()
 
     Moderation_status = models.CharField(max_length=10, choices=MOD_CHOICES, default='pending')
     Moderation_date = models.DateTimeField(null=True, blank=True)  # Новое поле для хранения даты успешной модерации
@@ -90,6 +90,7 @@ class MangaPage(models.Model):
 
     class Meta:
         unique_together = ('manga', 'volume', 'chapter', 'page_image', 'Chapter_Title')
+
 
     def __str__(self):
         return f"Volume {self.volume}, Chapter {self.chapter}, Page {self.page_number} ,Chapter_Title{self.Chapter_Title} "
