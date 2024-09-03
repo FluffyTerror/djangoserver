@@ -7,6 +7,7 @@ from django.http import Http404, HttpResponse, FileResponse
 from django.utils import timezone
 from rest_framework import generics, status, views
 from rest_framework.generics import get_object_or_404, ListAPIView, CreateAPIView
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,8 +19,28 @@ from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, Mang
     CategorySerializer, PersonSerializer, MangaVolumeSerializer, MangaModerationSerializer
 from django.shortcuts import render
 
+class TitlePagination(PageNumberPagination):
+    page_size = 4
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+class CatalogPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
+class UserPagination(PageNumberPagination):
+    page_size = 4
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
+class BookmarkPagination(PageNumberPagination):
+    page_size = 6
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+class NewsPagination(PageNumberPagination):
+    page_size = 8
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 class DeleteUserView(APIView):#удаление юзера
     permission_classes = [IsAuthenticated]
@@ -153,6 +174,7 @@ class UsernameBookmarksView(APIView):
 
 class CatalogListView(APIView):
     permission_classes = [AllowAny]
+    pagination_class = CatalogPagination
     def post(self, request):
         sort_by = request.data.get('sort_by', 'popularity')  # По умолчанию сортировка по популярности
         status_filter = request.data.get('status', [])  # По умолчанию фильтр по статусу пустой список
@@ -188,6 +210,7 @@ class CatalogListView(APIView):
             queryset = queryset.order_by('-Title')
 
         serializer = MangaSerializer(queryset, many=True)
+
         return Response(serializer.data)
 
 
@@ -234,6 +257,7 @@ class NewsCreateView(CreateAPIView):
 
 class NewsListView(APIView):
     permission_classes = [AllowAny]
+    pagination_class = NewsPagination
 
     def get(self, request, *args, **kwargs):
         # Получаем все объекты новостей
@@ -302,6 +326,7 @@ class MangaIdView(APIView):
 
 
 class MangaListView(APIView):
+    pagination_class = CatalogPagination
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
@@ -335,6 +360,7 @@ class Userimg(APIView):
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
+    pagination_class = UserPagination
 
     def get(self, request, *args, **kwargs):
         # Получение текущего пользователя из токена
@@ -348,6 +374,7 @@ class ProfileView(APIView):
 
 
 class UsernameView(APIView):
+    pagination_class = UserPagination
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
@@ -454,6 +481,7 @@ class MangaUpdateView(APIView):
 class AddBookmarkView(APIView):
     permission_classes = [IsAuthenticated]
 
+
     def post(self, request, *args, **kwargs):
         user = request.user
         manga_id = request.data.get('manga_id')
@@ -528,6 +556,7 @@ class AddOrUpdateReviewView(generics.CreateAPIView):
 
 
 class MangaReviewsView(generics.ListAPIView): # GET список отзывов
+    pagination_class = BookmarkPagination
     permission_classes = [AllowAny]
     serializer_class = ReviewSerializer
 
@@ -596,6 +625,7 @@ class LogoutAPIView(APIView):# POST разалогинить юзера
 
 class MangaTitleSearchView(APIView):
     permission_classes = [AllowAny]
+    pagination_class = TitlePagination
     def post(self, request, *args, **kwargs):
         query = request.data.get('query', None)
 
@@ -614,6 +644,7 @@ class MangaTitleSearchView(APIView):
 
 class MangaAuthorSearchView(APIView):
     permission_classes = [AllowAny]
+    pagination_class = TitlePagination
     def post(self, request, *args, **kwargs):
         query = request.data.get('query', None)
 
@@ -632,6 +663,7 @@ class MangaAuthorSearchView(APIView):
 
 class MangaPublisherSearchView(APIView):
     permission_classes = [AllowAny]
+    pagination_class = TitlePagination
     def post(self, request, *args, **kwargs):
         query = request.data.get('query', None)
 
@@ -647,6 +679,7 @@ class MangaPublisherSearchView(APIView):
 
 
 class PopularMangaView(APIView):
+
     serializer_class = MangaSerializer
     permission_classes = [AllowAny]
 
@@ -724,6 +757,7 @@ class NewReleasesView(APIView):
 
 class AllPopularMangaView(APIView):
     serializer_class = MangaSerializer
+    pagination_class = CatalogPagination
     permission_classes = [AllowAny]
 
     def post(self, request):
