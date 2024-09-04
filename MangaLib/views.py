@@ -437,8 +437,8 @@ class MangaCreateView(APIView):
         serializer = MangaSerializer(data=request.data)
         if serializer.is_valid():
             manga = serializer.save()
-
-            # Создаем директорию для манги и обложки
+            #user = request.user
+            #Manga.created_by = user
             manga_dir = os.path.join('media/Manga', manga.Title)
             cover_dir = os.path.join(manga_dir, 'cover')
             os.makedirs(cover_dir, exist_ok=True)
