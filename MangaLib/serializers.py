@@ -143,7 +143,7 @@ class MangaSerializer(serializers.ModelSerializer):
             "id", "Title", "Author", "Description", "Release", "Status",
             "Chapters", "Artist", "categories", "Image", "Rating",
             "RatingCount", "categories_display", "Created_at", "Publisher", "Mod_status", "Mod_date", "Mod_message",
-            "Url_message"
+            "Url_message","Created_by"
         )
         read_only_fields = ("id", "Rating", "RatingCount", "Mod_status", "Mod_date")
 

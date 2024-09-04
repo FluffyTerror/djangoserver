@@ -55,12 +55,13 @@ class Manga(models.Model):
     Description = models.TextField(blank=True)
     Release = models.DateField()
     Status = models.CharField(max_length=64, choices=STATUS_CHOICES)
-    #Chapters = models.IntegerField()
+    Chapters = models.IntegerField()
 
     Moderation_status = models.CharField(max_length=10, choices=MOD_CHOICES, default='pending')
     Moderation_date = models.DateTimeField(null=True, blank=True)  # Новое поле для хранения даты успешной модерации
     Mod_message = models.CharField(max_length=256, blank=True)
     Url_message = models.CharField(max_length=512, blank=True)
+    Created_by = models.CharField(max_length=64,blank=True)
 
     Image = models.ImageField(upload_to='Manga/', default='Manga/image_10.jpg')
     Rating = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(10)])

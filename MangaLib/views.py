@@ -434,17 +434,38 @@ class MangaCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        username = request.user.username
+        request.data['Created_by'] = username
         serializer = MangaSerializer(data=request.data)
         if serializer.is_valid():
             manga = serializer.save()
-            #user = request.user
-            #Manga.created_by = user
             manga_dir = os.path.join('media/Manga', manga.Title)
             cover_dir = os.path.join(manga_dir, 'cover')
             os.makedirs(cover_dir, exist_ok=True)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserPublications(APIView):
+    permission_classes = [IsAuthenticated]
+    def post (self,request):
+        username = request.user.username
+        sort_by = request.data.get('sort_by', 'pending')  # По умолчанию сортировка по популярности
+        # Начинаем с базового QuerySet
+        queryset = Manga.objects.all().filter(Created_by=username)
+
+        # Сортировка
+        if sort_by == 'approved':
+            queryset = Manga.objects.all().filter(Moderation_status='approved')
+        elif sort_by == 'rejected':
+            queryset = Manga.objects.all().filter(Moderation_status='rejected')
+        serializer = MangaSerializer(queryset, many=True)
+
+        return Response(serializer.data)
+
+
+
 
 
 class MangaDetailView(APIView): # GET конкретный тайтл
@@ -522,7 +543,7 @@ class AddFavouriteView(APIView):# POST добавить в избранное
 
 class AddOrUpdateReviewView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = ReviewSerializer
+    #serializer_class = ReviewSerializer
 
     def perform_create(self, serializer):
         manga_id = self.kwargs['manga_id']
@@ -556,7 +577,7 @@ class AddOrUpdateReviewView(generics.CreateAPIView):
 
 
 class MangaReviewsView(generics.ListAPIView): # GET список отзывов
-    pagination_class = BookmarkPagination
+   # pagination_class = BookmarkPagination
     permission_classes = [AllowAny]
     serializer_class = ReviewSerializer
 

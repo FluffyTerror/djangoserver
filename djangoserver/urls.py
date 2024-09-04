@@ -24,6 +24,7 @@ urlpatterns = [
     path('api/news/', NewsListView.as_view(), name='news-list'),
     path('api/news/create/', NewsCreateView.as_view(), name='news-create'),
     path('api/news/<int:id>/', NewsDetailView.as_view(), name='news-detail'),
+    path('api/user/publications/',UserPublications.as_view(),name ='user publications'),
 
     path('api/manga/find/', MangaIdView.as_view(), name='manga-get-by-id'),
     path('api/manga/create/', MangaCreateView.as_view(), name='manga-create'),
