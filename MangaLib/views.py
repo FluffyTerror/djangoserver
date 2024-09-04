@@ -449,19 +449,17 @@ class MangaCreateView(APIView):
 
 class UserPublications(APIView):
     permission_classes = [IsAuthenticated]
-    def post (self,request):
+    def post(self, request):
         username = request.user.username
-        sort_by = request.data.get('sort_by', 'pending')  # По умолчанию сортировка по популярности
-        # Начинаем с базового QuerySet
-        queryset = Manga.objects.all().filter(Created_by=username)
+        sort_by = request.data.get('sort_by', None)
+        queryset = Manga.objects.filter(Created_by=username)
+        if sort_by:
+            if sort_by in ['approved', 'rejected', 'pending']:
+                queryset = queryset.filter(Moderation_status=sort_by)
+            else:
+                return Response({"error": "Invalid sort_by value."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Сортировка
-        if sort_by == 'approved':
-            queryset = Manga.objects.all().filter(Moderation_status='approved')
-        elif sort_by == 'rejected':
-            queryset = Manga.objects.all().filter(Moderation_status='rejected')
         serializer = MangaSerializer(queryset, many=True)
-
         return Response(serializer.data)
 
 
