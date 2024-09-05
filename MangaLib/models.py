@@ -15,22 +15,18 @@ class Category(models.Model):
 
 
 def manga_cover_directory_path(instance, filename):
-    # Обложки манги будут храниться в папке 'media/Manga/{manga_title}/cover/{filename}'
     return f'Manga/{slugify(instance.Title)}/cover/{filename}'
 
 
 def manga_pages_directory_path(instance, filename):
-    # Страницы манги будут храниться в папке 'media/Manga/{manga_title}/volume_{volume}/chapter_{chapter}/{page_number}.jpg'
     return f'Manga/{slugify(instance.manga.Title)}/volume_{instance.volume}/chapter_{instance.chapter}/{filename}'
 
 
 def user_profile_image_directory_path(instance, filename):
-    # Файлы пользователей будут храниться в папке 'media/Users/{user_id}/{filename}'
     return f'Users/{instance.id}/{filename}'
 
 
 def person_image_directory_path(instance, filename):
-    # Файлы будут храниться в папке 'media/Persons/{person_nickname}/{filename}'
     return f'Persons/{instance.Nickname}/{filename}'
 
 

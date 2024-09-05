@@ -151,7 +151,7 @@ class MangaSerializer(serializers.ModelSerializer):
         return [category.name for category in obj.Category.all()]
 
     def get_Chapters(self, obj):
-        # Считаем количество уникальных глав (chapter) для этой манги
+        # Считаем количество уникальных глав для этой манги
         chapters_count = MangaPage.objects.filter(manga=obj).values('volume', 'chapter').distinct().count()
         return chapters_count
 

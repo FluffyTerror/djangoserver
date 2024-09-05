@@ -18,13 +18,14 @@ urlpatterns = [
     path('api/user/', UsernameView.as_view(), name='user_view'),
     path('user_img/<str:username>/', Userimg.as_view(), name='user_image'),
     path('api/user/<str:username>/bookmarks/', UsernameBookmarksView.as_view(), name='username-bookmarks'),
+    path('api/user/publications/',UserPublications.as_view(),name ='user publications'),
     path('api/user/delete/', DeleteUserView.as_view(), name='delete-user'),
-    #path('api/user/manga/moderation/', UserCreatedMangaView.as_view(), name='user-created-manga'),
+
 
     path('api/news/', NewsListView.as_view(), name='news-list'),
     path('api/news/create/', NewsCreateView.as_view(), name='news-create'),
     path('api/news/<int:id>/', NewsDetailView.as_view(), name='news-detail'),
-    path('api/user/publications/',UserPublications.as_view(),name ='user publications'),
+
 
     path('api/manga/find/', MangaIdView.as_view(), name='manga-get-by-id'),
     path('api/manga/create/', MangaCreateView.as_view(), name='manga-create'),
@@ -58,8 +59,10 @@ urlpatterns = [
     path('search/author/', MangaAuthorSearchView.as_view(), name='author search'),
     path('search/publisher/', MangaPublisherSearchView.as_view(), name='publisher search'),
 
+
     path('api/<int:manga_id>/approve_manga/', ApproveMangaView.as_view(), name='manga approve'),
     path('api/<int:person_id>/approve_person/', ApprovePersonView.as_view(), name='person approve'),
+
 
     path('api/manga/<int:manga_id>/volumes/', MangaVolumesAndChaptersView.as_view(), name='manga-volumes-and-chapters'),
     path('manga_read/<int:manga_id>/', MangaPageDetailView.as_view(), name='manga-page-detail'),
