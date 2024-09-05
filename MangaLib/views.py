@@ -19,28 +19,36 @@ from .serializers import UserSerializer, MangaSerializer, ReviewSerializer, Mang
     CategorySerializer, PersonSerializer, MangaVolumeSerializer, MangaModerationSerializer
 from django.shortcuts import render
 
+
 class TitlePagination(PageNumberPagination):
     page_size = 4
     page_size_query_param = 'page_size'
     max_page_size = 100
+
+
 class CatalogPagination(PageNumberPagination):
     page_size = 20
     page_size_query_param = 'page_size'
     max_page_size = 100
+
 
 class UserPagination(PageNumberPagination):
     page_size = 4
     page_size_query_param = 'page_size'
     max_page_size = 100
 
+
 class BookmarkPagination(PageNumberPagination):
     page_size = 6
     page_size_query_param = 'page_size'
     max_page_size = 100
+
+
 class NewsPagination(PageNumberPagination):
     page_size = 8
     page_size_query_param = 'page_size'
     max_page_size = 100
+
 
 class DeleteUserView(APIView):#удаление юзера
     permission_classes = [IsAuthenticated]
@@ -51,7 +59,7 @@ class DeleteUserView(APIView):#удаление юзера
 
 
 class MangaPageDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request, manga_id):
         # Извлечение параметров из query parameters
@@ -83,14 +91,11 @@ class MangaPageDetailView(APIView):
         return FileResponse(image)
 
 
-
 class MangaVolumesAndChaptersView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, manga_id):
-        # Проверяем, существует ли манга с данным ID
         manga = get_object_or_404(Manga, id=manga_id)
-
         # Получаем тома и главы манги
         volumes_and_chapters = (
             MangaPage.objects
@@ -363,10 +368,7 @@ class ProfileView(APIView):
     pagination_class = UserPagination
 
     def get(self, request, *args, **kwargs):
-        # Получение текущего пользователя из токена
         user = request.user
-
-        # Если пользователь найден, сериализуем его данные
         if user:
             return Response({"username": user.username}, status=status.HTTP_200_OK)
         else:
@@ -461,9 +463,6 @@ class UserPublications(APIView):
 
         serializer = MangaSerializer(queryset, many=True)
         return Response(serializer.data)
-
-
-
 
 
 class MangaDetailView(APIView): # GET конкретный тайтл
@@ -837,7 +836,7 @@ class PersonCreateView(APIView):
 
 
 class ApprovePersonView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]  # Добавляем наше новое разрешение
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request,person_id):
         try:

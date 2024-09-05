@@ -55,7 +55,7 @@ class Manga(models.Model):
     Description = models.TextField(blank=True)
     Release = models.DateField()
     Status = models.CharField(max_length=64, choices=STATUS_CHOICES)
-    Chapters = models.IntegerField()
+    Chapters = models.IntegerField(default=0)
 
     Moderation_status = models.CharField(max_length=10, choices=MOD_CHOICES, default='pending')
     Moderation_date = models.DateTimeField(null=True, blank=True)  # Новое поле для хранения даты успешной модерации
