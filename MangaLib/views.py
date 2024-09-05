@@ -541,7 +541,7 @@ class AddFavouriteView(APIView):# POST добавить в избранное
 
 class AddOrUpdateReviewView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
-    #serializer_class = ReviewSerializer
+    serializer_class = ReviewSerializer
 
     def perform_create(self, serializer):
         manga_id = self.kwargs['manga_id']
