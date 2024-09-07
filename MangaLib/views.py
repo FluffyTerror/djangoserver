@@ -278,6 +278,12 @@ class NewsListView(APIView):
 class MangaUploadView(views.APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request, manga_id):
+        manga = Manga.objects.get(id=manga_id)
+        username = request.user.username
+        mangausername = manga.Created_by
+        print(mangausername)
+        if username != mangausername:
+            return Response({'error': 'You are not allowed to upload'},status.HTTP_401_UNAUTHORIZED)
         try:
             manga = Manga.objects.get(id=manga_id)
         except Manga.DoesNotExist:
