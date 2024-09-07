@@ -348,3 +348,8 @@ class MangaModerationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Manga
         fields = ['id', 'Title', 'Moderation_status', 'Moderation_date', 'Mod_message']
+
+class PersonModerationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Manga
+        fields = ['id', 'Title', 'Moderation_status', 'Moderation_date', 'Mod_message']
