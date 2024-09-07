@@ -321,7 +321,7 @@ class PersonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Person
         fields = ['id', 'Nickname', 'Country', 'Type', 'About', 'profile_image', "Mod_status", "Mod_date",
-                  "Mod_message"]
+                  "Mod_message", "Created_by"]
         read_only_fields = ("Mod_status", "Mod_date")
 
 

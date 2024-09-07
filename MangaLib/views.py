@@ -449,7 +449,7 @@ class MangaCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserPublications(APIView):
+class UserMangaPublications(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
         username = request.user.username
@@ -462,6 +462,22 @@ class UserPublications(APIView):
                 return Response({"error": "Invalid sort_by value."}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = MangaSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class UserPersonsPublications(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        username = request.user.username
+        sort_by = request.data.get('sort_by', None)
+        queryset = Person.objects.filter(Created_by=username)
+        if sort_by:
+            if sort_by in ['approved', 'rejected', 'pending']:
+                queryset = queryset.filter(Moderation_status=sort_by)
+            else:
+                return Response({"error": "Invalid sort_by value."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = PersonSerializer(queryset, many=True)
         return Response(serializer.data)
 
 
@@ -824,6 +840,8 @@ class CategoryListView(ListAPIView):
 class PersonCreateView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
+        username = request.user.username
+        request.data['Created_by'] = username
         serializer = PersonSerializer(data=request.data)
 
         if serializer.is_valid():

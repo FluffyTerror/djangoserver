@@ -161,6 +161,7 @@ class Person(models.Model):
     Moderation_status = models.CharField(max_length=10, choices=MOD_CHOICES, default='pending')
     Moderation_date = models.DateTimeField(null=True, blank=True)
     Mod_message = models.CharField(max_length=256, blank=True)
+    Created_by = models.CharField(max_length=64, blank=True)
 
     def __str__(self):
         return self.Nickname

@@ -18,7 +18,8 @@ urlpatterns = [
     path('api/user/', UsernameView.as_view(), name='user_view'),
     path('user_img/<str:username>/', Userimg.as_view(), name='user_image'),
     path('api/user/<str:username>/bookmarks/', UsernameBookmarksView.as_view(), name='username-bookmarks'),
-    path('api/user/publications/',UserPublications.as_view(),name ='user publications'),
+    path('api/user/publications/manga/',UserMangaPublications.as_view(),name ='user manga publications'),
+    path('api/user/publications/persons/', UserPersonsPublications.as_view(), name='user persons publications'),
     path('api/user/delete/', DeleteUserView.as_view(), name='delete-user'),
 
 
