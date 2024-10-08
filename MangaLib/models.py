@@ -54,7 +54,7 @@ class Manga(models.Model):
     Chapters = models.IntegerField(default=0)
 
     Moderation_status = models.CharField(max_length=10, choices=MOD_CHOICES, default='pending')
-    Moderation_date = models.DateTimeField(null=True, blank=True)  # Новое поле для хранения даты успешной модерации
+    Moderation_date = models.DateTimeField(null=True, blank=True)
     Mod_message = models.CharField(max_length=256, blank=True)
     Url_message = models.CharField(max_length=512, blank=True)
     Created_by = models.CharField(max_length=64,blank=True)
