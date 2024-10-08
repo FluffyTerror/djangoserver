@@ -10,5 +10,5 @@ class IsAdminOrReadOnly(permissions.BasePermission):
 
 class IsAdminUser(BasePermission):
     def has_permission(self, request, view):
-        # Проверяем, аутентифицирован ли пользователь и является ли он администратором
+        # Проверяем,является ли юзер администратором
         return request.user and request.user.is_authenticated and request.user.is_admin
