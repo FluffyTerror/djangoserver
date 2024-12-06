@@ -1,7 +1,6 @@
 import os
 import shutil
 import zipfile
-from django.core.files.storage import default_storage
 from django.contrib.auth.hashers import make_password, is_password_usable
 from rest_framework import serializers
 from MangaLib.models import Manga, User, Review, Category, MangaPage, News, Person
@@ -128,14 +127,14 @@ class MangaSerializer(serializers.ModelSerializer):
     Image = serializers.ImageField(required=False)
 
     Mod_status = serializers.ChoiceField(choices=Manga.MOD_CHOICES, read_only=True)
-    Mod_date = serializers.DateTimeField(read_only=True)  # Поле только для чтения
+    Mod_date = serializers.DateTimeField(read_only=True)
 
     Chapters = serializers.SerializerMethodField()
     Url_message = serializers.ListField(
         child=serializers.URLField(),
         required=False,
         allow_empty=True
-    )  # Массив URL, который будет сериализован и десериализован
+    )
 
     class Meta:
         model = Manga
